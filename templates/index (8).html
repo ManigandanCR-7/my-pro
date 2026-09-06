@@ -1,0 +1,2243 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+
+    <meta name="viewport"
+        content="width=device-width, initial-scale=1.0">
+
+    <title>Nova AI // Next-Gen Voice Agent</title>
+
+    <!-- Google Fonts -->
+    <link
+        href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet">
+
+
+    <style>
+
+        /* ==========================================
+           ROOT
+        ========================================== */
+
+        :root {
+
+            --bg: #030305;
+
+            --surface: rgba(18, 18, 26, 0.68);
+
+            --primary: #7c3aed;
+
+            --primary-light: #a78bfa;
+
+            --secondary: #4f46e5;
+
+            --text: #ffffff;
+
+            --text-muted: #a1a1aa;
+
+            --border: rgba(255, 255, 255, 0.12);
+        }
+
+
+
+        /* ==========================================
+           RESET
+        ========================================== */
+
+        * {
+
+            margin: 0;
+
+            padding: 0;
+
+            box-sizing: border-box;
+        }
+
+
+
+        /* ==========================================
+           BODY
+        ========================================== */
+
+        body {
+
+            min-height: 100vh;
+
+            display: flex;
+
+            align-items: center;
+
+            justify-content: center;
+
+            padding: 1rem;
+
+            background: var(--bg);
+
+            font-family:
+                "Plus Jakarta Sans",
+                sans-serif;
+
+            color: var(--text);
+
+            overflow: hidden;
+
+            position: relative;
+        }
+
+
+
+        /* ==========================================
+           CAMERA BACKGROUND
+        ========================================== */
+
+        #cameraBackground {
+
+            position: fixed;
+
+            inset: 0;
+
+            width: 100%;
+
+            height: 100%;
+
+            object-fit: cover;
+
+            z-index: 0;
+
+            background: #000;
+        }
+
+
+
+        /* ==========================================
+           CAMERA OVERLAY
+        ========================================== */
+
+        .camera-overlay {
+
+            position: fixed;
+
+            inset: 0;
+
+            background:
+                linear-gradient(
+                    135deg,
+                    rgba(0, 0, 0, 0.45),
+                    rgba(0, 0, 0, 0.18),
+                    rgba(0, 0, 0, 0.5)
+                );
+
+            z-index: 1;
+
+            pointer-events: none;
+        }
+
+
+
+        /* ==========================================
+           CAMERA GLOW
+        ========================================== */
+
+        .camera-glow {
+
+            position: fixed;
+
+            inset: 0;
+
+            background:
+                radial-gradient(
+                    circle at center,
+                    transparent 15%,
+                    rgba(0, 0, 0, 0.25) 70%,
+                    rgba(0, 0, 0, 0.65) 100%
+                );
+
+            z-index: 2;
+
+            pointer-events: none;
+        }
+
+
+
+        /* ==========================================
+           MAIN CARD
+        ========================================== */
+
+        .container {
+
+            width: 100%;
+
+            max-width: 420px;
+
+            padding: 1.35rem 1.6rem;
+
+            background:
+                rgba(18, 18, 26, 0.68);
+
+            backdrop-filter: blur(22px);
+
+            -webkit-backdrop-filter: blur(22px);
+
+            border:
+                1px solid rgba(255, 255, 255, 0.12);
+
+            border-radius: 24px;
+
+            box-shadow:
+                0 20px 45px rgba(0, 0, 0, 0.50),
+                inset 0 1px 0 rgba(255, 255, 255, 0.12);
+
+            position: relative;
+
+            z-index: 10;
+
+            opacity: 0;
+
+            cursor: grab;
+
+            touch-action: none;
+
+            user-select: none;
+
+            animation:
+                containerEntrance
+                1.2s
+                cubic-bezier(
+                    0.16,
+                    1,
+                    0.3,
+                    1
+                )
+                forwards;
+        }
+
+
+
+        /* ==========================================
+           DRAGGING STATE
+        ========================================== */
+
+        .container.dragging {
+
+            cursor: grabbing;
+
+            transition: none;
+
+            box-shadow:
+                0 25px 55px rgba(0, 0, 0, 0.65),
+                inset 0 1px 0
+                rgba(255, 255, 255, 0.15);
+        }
+
+
+
+        /* ==========================================
+           ENTRANCE ANIMATION
+        ========================================== */
+
+        @keyframes containerEntrance {
+
+            0% {
+
+                opacity: 0;
+
+                transform:
+                    translateY(50px)
+                    scale(0.94);
+            }
+
+            100% {
+
+                opacity: 1;
+
+                transform:
+                    translateY(0)
+                    scale(1);
+            }
+        }
+
+
+
+        /* ==========================================
+           HEADER
+        ========================================== */
+
+        .header {
+
+            text-align: center;
+
+            margin-bottom: 1rem;
+        }
+
+
+
+        /* ==========================================
+           STATUS INDICATOR
+        ========================================== */
+
+        .status-indicator {
+
+            display: inline-flex;
+
+            align-items: center;
+
+            gap: 7px;
+
+            padding: 4px 9px;
+
+            margin-bottom: 0.5rem;
+
+            border-radius: 999px;
+
+            background:
+                rgba(255, 255, 255, 0.06);
+
+            border:
+                1px solid
+                rgba(255, 255, 255, 0.1);
+
+            font-family:
+                "JetBrains Mono",
+                monospace;
+
+            font-size: 0.58rem;
+
+            color: #d4d4d8;
+
+            letter-spacing: 0.05em;
+        }
+
+
+
+        .status-dot {
+
+            width: 6px;
+
+            height: 6px;
+
+            border-radius: 50%;
+
+            background: #22c55e;
+
+            box-shadow:
+                0 0 10px #22c55e;
+
+            animation:
+                statusPulse 2s infinite;
+        }
+
+
+
+        @keyframes statusPulse {
+
+            0%,
+            100% {
+
+                opacity: 1;
+            }
+
+            50% {
+
+                opacity: 0.4;
+            }
+        }
+
+
+
+        /* ==========================================
+           TITLE
+        ========================================== */
+
+        .title {
+
+            font-size: 1.75rem;
+
+            font-weight: 800;
+
+            letter-spacing: -0.04em;
+
+            margin-bottom: 0.35rem;
+
+            background:
+                linear-gradient(
+                    135deg,
+                    #ffffff,
+                    #c4b5fd
+                );
+
+            -webkit-background-clip: text;
+
+            background-clip: text;
+
+            color: transparent;
+        }
+
+
+
+        /* ==========================================
+           SUBTITLE
+        ========================================== */
+
+        .subtitle {
+
+            font-family:
+                "JetBrains Mono",
+                monospace;
+
+            font-size: 0.68rem;
+
+            line-height: 1.4;
+
+            color: var(--text-muted);
+        }
+
+
+
+        /* ==========================================
+           VISUALIZER
+        ========================================== */
+
+        .visualizer-container {
+
+            position: relative;
+
+            width: 125px;
+
+            height: 125px;
+
+            margin:
+                0 auto 1rem auto;
+
+            display: flex;
+
+            align-items: center;
+
+            justify-content: center;
+        }
+
+
+
+        /* ==========================================
+           RINGS
+        ========================================== */
+
+        .ring {
+
+            position: absolute;
+
+            border-radius: 50%;
+
+            border:
+                1px solid
+                rgba(167, 139, 250, 0.25);
+        }
+
+
+
+        .ring-1 {
+
+            width: 100%;
+
+            height: 100%;
+
+            animation:
+                rotateRing
+                12s
+                linear
+                infinite;
+        }
+
+
+
+        .ring-2 {
+
+            width: 80%;
+
+            height: 80%;
+
+            border-color:
+                rgba(124, 58, 237, 0.35);
+
+            animation:
+                rotateRingReverse
+                9s
+                linear
+                infinite;
+        }
+
+
+
+        @keyframes rotateRing {
+
+            from {
+
+                transform: rotate(0deg);
+            }
+
+            to {
+
+                transform: rotate(360deg);
+            }
+        }
+
+
+
+        @keyframes rotateRingReverse {
+
+            from {
+
+                transform: rotate(360deg);
+            }
+
+            to {
+
+                transform: rotate(0deg);
+            }
+        }
+
+
+
+        /* ==========================================
+           MIC BUTTON
+        ========================================== */
+
+        .mic-btn {
+
+            width: 76px;
+
+            height: 76px;
+
+            border-radius: 50%;
+
+            border: none;
+
+            cursor: pointer;
+
+            display: flex;
+
+            align-items: center;
+
+            justify-content: center;
+
+            position: relative;
+
+            z-index: 5;
+
+            background:
+                linear-gradient(
+                    135deg,
+                    #7c3aed,
+                    #4f46e5
+                );
+
+            box-shadow:
+                0 10px 30px
+                rgba(79, 70, 229, 0.4);
+
+            transition:
+                transform 0.25s ease,
+                box-shadow 0.25s ease;
+        }
+
+
+
+        .mic-btn:hover {
+
+            transform: scale(1.06);
+
+            box-shadow:
+                0 15px 40px
+                rgba(79, 70, 229, 0.55);
+        }
+
+
+
+        .mic-btn:active {
+
+            transform: scale(0.96);
+        }
+
+
+
+        /* ==========================================
+           LISTENING
+        ========================================== */
+
+        .mic-btn.listening {
+
+            background:
+                linear-gradient(
+                    135deg,
+                    #ef4444,
+                    #dc2626
+                );
+
+            box-shadow:
+                0 0 0
+                rgba(239, 68, 68, 0.5);
+
+            animation:
+                micPulse
+                1.5s
+                infinite;
+        }
+
+
+
+        @keyframes micPulse {
+
+            0% {
+
+                box-shadow:
+                    0 0 0 0
+                    rgba(239, 68, 68, 0.55);
+            }
+
+            70% {
+
+                box-shadow:
+                    0 0 0 20px
+                    rgba(239, 68, 68, 0);
+            }
+
+            100% {
+
+                box-shadow:
+                    0 0 0 0
+                    rgba(239, 68, 68, 0);
+            }
+        }
+
+
+
+        /* ==========================================
+           MIC ICON
+        ========================================== */
+
+        .mic-icon {
+
+            width: 27px;
+
+            height: 27px;
+
+            fill: white;
+        }
+
+
+
+        /* ==========================================
+           STATUS
+        ========================================== */
+
+        .status-box {
+
+            margin-bottom: 0.7rem;
+
+            text-align: center;
+        }
+
+
+
+        #status {
+
+            font-family:
+                "JetBrains Mono",
+                monospace;
+
+            font-size: 0.62rem;
+
+            color: #d4d4d8;
+        }
+
+
+
+        /* ==========================================
+           TRANSCRIPT
+        ========================================== */
+
+        .transcript {
+
+            min-height: 38px;
+
+            padding:
+                0.55rem 0.75rem;
+
+            border-radius: 10px;
+
+            background:
+                rgba(0, 0, 0, 0.25);
+
+            border:
+                1px solid
+                rgba(255, 255, 255, 0.08);
+
+            font-family:
+                "JetBrains Mono",
+                monospace;
+
+            font-size: 0.58rem;
+
+            line-height: 1.4;
+
+            color: #d4d4d8;
+
+            margin-bottom: 0.7rem;
+
+            text-align: center;
+        }
+
+
+
+        /* ==========================================
+           WAVE
+        ========================================== */
+
+        .wave {
+
+            height: 18px;
+
+            display: flex;
+
+            align-items: center;
+
+            justify-content: center;
+
+            gap: 3px;
+
+            margin-bottom: 0.65rem;
+        }
+
+
+
+        .wave span {
+
+            width: 2px;
+
+            height: 4px;
+
+            border-radius: 2px;
+
+            background: #8b5cf6;
+
+            transition:
+                height 0.2s ease;
+        }
+
+
+
+        .wave.active span {
+
+            animation:
+                waveAnimation
+                0.8s
+                ease-in-out
+                infinite
+                alternate;
+        }
+
+
+
+        .wave span:nth-child(1) {
+            animation-delay: 0s;
+        }
+
+        .wave span:nth-child(2) {
+            animation-delay: 0.1s;
+        }
+
+        .wave span:nth-child(3) {
+            animation-delay: 0.2s;
+        }
+
+        .wave span:nth-child(4) {
+            animation-delay: 0.3s;
+        }
+
+        .wave span:nth-child(5) {
+            animation-delay: 0.4s;
+        }
+
+        .wave span:nth-child(6) {
+            animation-delay: 0.3s;
+        }
+
+        .wave span:nth-child(7) {
+            animation-delay: 0.2s;
+        }
+
+        .wave span:nth-child(8) {
+            animation-delay: 0.1s;
+        }
+
+
+
+        @keyframes waveAnimation {
+
+            from {
+
+                height: 4px;
+            }
+
+            to {
+
+                height: 17px;
+            }
+        }
+
+
+
+        /* ==========================================
+           COMMAND TITLE
+        ========================================== */
+
+        .commands-title {
+
+            font-family:
+                "JetBrains Mono",
+                monospace;
+
+            font-size: 0.55rem;
+
+            letter-spacing: 0.1em;
+
+            color: #71717a;
+
+            text-align: center;
+
+            margin-bottom: 0.45rem;
+
+            text-transform: uppercase;
+        }
+
+
+
+        /* ==========================================
+           COMMANDS
+        ========================================== */
+
+        .commands {
+
+            display: flex;
+
+            flex-wrap: wrap;
+
+            justify-content: center;
+
+            gap: 5px;
+        }
+
+
+
+        .command-chip {
+
+            padding:
+                6px 8px;
+
+            border-radius: 8px;
+
+            border:
+                1px solid
+                rgba(255, 255, 255, 0.08);
+
+            background:
+                rgba(255, 255, 255, 0.04);
+
+            color: #a1a1aa;
+
+            font-family:
+                "JetBrains Mono",
+                monospace;
+
+            font-size: 0.55rem;
+
+            cursor: pointer;
+
+            transition:
+                all 0.2s ease;
+        }
+
+
+
+        .command-chip:hover {
+
+            color: white;
+
+            background:
+                rgba(124, 58, 237, 0.18);
+
+            border-color:
+                rgba(167, 139, 250, 0.35);
+
+            transform:
+                translateY(-1px);
+        }
+
+
+
+        /* ==========================================
+           MOBILE
+        ========================================== */
+
+        @media (max-width: 600px) {
+
+            body {
+
+                padding: 0.7rem;
+            }
+
+
+            .container {
+
+                width: 90%;
+
+                max-width: 360px;
+
+                padding:
+                    1.1rem 1rem;
+
+                border-radius: 21px;
+            }
+
+
+            .header {
+
+                margin-bottom: 0.75rem;
+            }
+
+
+            .status-indicator {
+
+                margin-bottom: 0.4rem;
+
+                padding:
+                    4px 8px;
+
+                font-size: 0.52rem;
+            }
+
+
+            .title {
+
+                font-size: 1.45rem;
+            }
+
+
+            .subtitle {
+
+                font-size: 0.59rem;
+            }
+
+
+            .visualizer-container {
+
+                width: 105px;
+
+                height: 105px;
+
+                margin-bottom: 0.75rem;
+            }
+
+
+            .mic-btn {
+
+                width: 66px;
+
+                height: 66px;
+            }
+
+
+            .mic-icon {
+
+                width: 24px;
+
+                height: 24px;
+            }
+
+
+            .status-box {
+
+                margin-bottom: 0.55rem;
+            }
+
+
+            #status {
+
+                font-size: 0.56rem;
+            }
+
+
+            .transcript {
+
+                min-height: 34px;
+
+                padding:
+                    0.45rem 0.6rem;
+
+                font-size: 0.52rem;
+
+                margin-bottom: 0.55rem;
+            }
+
+
+            .wave {
+
+                height: 15px;
+
+                margin-bottom: 0.5rem;
+            }
+
+
+            .commands-title {
+
+                font-size: 0.5rem;
+
+                margin-bottom: 0.4rem;
+            }
+
+
+            .command-chip {
+
+                padding:
+                    5px 6px;
+
+                font-size: 0.48rem;
+            }
+        }
+
+
+
+        /* ==========================================
+           SHORT HEIGHT DEVICES
+        ========================================== */
+
+        @media (max-height: 700px) {
+
+            .container {
+
+                padding:
+                    0.9rem 0.9rem;
+            }
+
+
+            .visualizer-container {
+
+                width: 90px;
+
+                height: 90px;
+
+                margin-bottom: 0.6rem;
+            }
+
+
+            .mic-btn {
+
+                width: 58px;
+
+                height: 58px;
+            }
+
+
+            .mic-icon {
+
+                width: 21px;
+
+                height: 21px;
+            }
+        }
+
+
+
+    </style>
+
+</head>
+
+
+
+<body>
+
+
+    <!-- ==========================================
+         CAMERA
+    ========================================== -->
+
+    <video
+        id="cameraBackground"
+        autoplay
+        playsinline
+        muted>
+    </video>
+
+
+    <div class="camera-overlay"></div>
+
+    <div class="camera-glow"></div>
+
+
+
+    <!-- ==========================================
+         NOVA AI CARD
+    ========================================== -->
+
+    <main class="container"
+        id="novaCard">
+
+
+        <!-- HEADER -->
+
+        <header class="header">
+
+
+            <div class="status-indicator">
+
+                <span class="status-dot"></span>
+
+                NEURAL CORE ONLINE
+
+            </div>
+
+
+            <h1 class="title">
+
+                Nova AI
+
+            </h1>
+
+
+            <p class="subtitle">
+
+                NEXT-GEN VOICE AGENT
+
+            </p>
+
+
+        </header>
+
+
+
+        <!-- ======================================
+             VISUALIZER
+        ======================================= -->
+
+        <div class="visualizer-container">
+
+
+            <div class="ring ring-1"></div>
+
+            <div class="ring ring-2"></div>
+
+
+            <button
+                id="micBtn"
+                class="mic-btn"
+                aria-label="Start voice command">
+
+
+                <svg
+                    class="mic-icon"
+                    viewBox="0 0 24 24">
+
+
+                    <path d="
+                        M12 14
+                        a3 3 0 0 0 3-3V6
+                        a3 3 0 0 0-6 0v5
+                        a3 3 0 0 0 3 3z
+                    " />
+
+
+                    <path d="
+                        M19 11
+                        a7 7 0 0 1-14 0
+                    " />
+
+
+                    <line
+                        x1="12"
+                        y1="18"
+                        x2="12"
+                        y2="22"
+                    />
+
+
+                    <line
+                        x1="8"
+                        y1="22"
+                        x2="16"
+                        y2="22"
+                    />
+
+
+                </svg>
+
+
+            </button>
+
+
+        </div>
+
+
+
+        <!-- ======================================
+             STATUS
+        ======================================= -->
+
+        <div class="status-box">
+
+            <span id="status">
+
+                CLICK THE MIC TO START
+
+            </span>
+
+        </div>
+
+
+
+        <!-- ======================================
+             TRANSCRIPT
+        ======================================= -->
+
+        <div
+            id="transcript"
+            class="transcript">
+
+            Your voice command will appear here...
+
+        </div>
+
+
+
+        <!-- ======================================
+             WAVE
+        ======================================= -->
+
+        <div
+            id="wave"
+            class="wave">
+
+
+            <span></span>
+
+            <span></span>
+
+            <span></span>
+
+            <span></span>
+
+            <span></span>
+
+            <span></span>
+
+            <span></span>
+
+            <span></span>
+
+
+        </div>
+
+
+
+        <!-- ======================================
+             COMMANDS
+        ======================================= -->
+
+        <div class="commands-title">
+
+            TRY SAYING
+
+        </div>
+
+
+        <div class="commands">
+
+
+            <button
+                class="command-chip"
+                data-command="Open YouTube and play Karuppu song">
+
+                Open YouTube & play Karuppu
+
+            </button>
+
+
+            <button
+                class="command-chip"
+                data-command="Email john at gmail.com type hello">
+
+                Email John
+
+            </button>
+
+
+            <button
+                class="command-chip"
+                data-command="Open Google">
+
+                Open Google
+
+            </button>
+
+
+        </div>
+
+
+    </main>
+
+
+
+    <script>
+
+
+        /* ==========================================
+           ELEMENTS
+        ========================================== */
+
+        const micBtn =
+            document.getElementById(
+                "micBtn"
+            );
+
+
+        const status =
+            document.getElementById(
+                "status"
+            );
+
+
+        const transcript =
+            document.getElementById(
+                "transcript"
+            );
+
+
+        const wave =
+            document.getElementById(
+                "wave"
+            );
+
+
+        const cameraBackground =
+            document.getElementById(
+                "cameraBackground"
+            );
+
+
+        const draggableCard =
+            document.getElementById(
+                "novaCard"
+            );
+
+
+
+        /* ==========================================
+           SPEECH RECOGNITION
+        ========================================== */
+
+        const SpeechRecognition =
+            window.SpeechRecognition ||
+            window.webkitSpeechRecognition;
+
+
+        let recognition;
+
+        let isListening = false;
+
+
+        if (SpeechRecognition) {
+
+
+            recognition =
+                new SpeechRecognition();
+
+
+            recognition.continuous =
+                false;
+
+
+            recognition.interimResults =
+                false;
+
+
+            recognition.lang =
+                "en-US";
+
+
+
+            /* ======================================
+               START LISTENING
+            ====================================== */
+
+            recognition.onstart =
+                function () {
+
+
+                    isListening = true;
+
+
+                    micBtn.classList.add(
+                        "listening"
+                    );
+
+
+                    wave.classList.add(
+                        "active"
+                    );
+
+
+                    status.textContent =
+                        "LISTENING...";
+
+
+                    transcript.textContent =
+                        "Speak your command...";
+
+                };
+
+
+
+            /* ======================================
+               RESULT
+            ====================================== */
+
+            recognition.onresult =
+                function (event) {
+
+
+                    const command =
+                        event
+                            .results[0][0]
+                            .transcript;
+
+
+                    transcript.textContent =
+                        command;
+
+
+                    status.textContent =
+                        "PROCESSING COMMAND...";
+
+
+                    sendCommand(
+                        command
+                    );
+
+                };
+
+
+
+            /* ======================================
+               END
+            ====================================== */
+
+            recognition.onend =
+                function () {
+
+
+                    isListening = false;
+
+
+                    micBtn.classList.remove(
+                        "listening"
+                    );
+
+
+                    wave.classList.remove(
+                        "active"
+                    );
+
+
+                    if (
+                        status.textContent ===
+                        "LISTENING..."
+                    ) {
+
+                        status.textContent =
+                            "CLICK THE MIC TO START";
+                    }
+
+                };
+
+
+
+            /* ======================================
+               ERROR
+            ====================================== */
+
+            recognition.onerror =
+                function (event) {
+
+
+                    console.error(
+                        "Speech recognition error:",
+                        event.error
+                    );
+
+
+                    isListening = false;
+
+
+                    micBtn.classList.remove(
+                        "listening"
+                    );
+
+
+                    wave.classList.remove(
+                        "active"
+                    );
+
+
+                    if (
+                        event.error ===
+                        "not-allowed"
+                    ) {
+
+                        status.textContent =
+                            "MICROPHONE PERMISSION DENIED";
+
+                    }
+
+                    else if (
+                        event.error ===
+                        "no-speech"
+                    ) {
+
+                        status.textContent =
+                            "NO SPEECH DETECTED";
+
+                    }
+
+                    else {
+
+                        status.textContent =
+                            "VOICE ERROR";
+                    }
+
+                };
+
+
+        }
+
+        else {
+
+
+            status.textContent =
+                "VOICE RECOGNITION NOT SUPPORTED";
+
+        }
+
+
+
+        /* ==========================================
+           MIC CLICK
+        ========================================== */
+
+        micBtn.addEventListener(
+            "click",
+            function () {
+
+
+                if (!recognition) {
+
+
+                    alert(
+                        "Your browser does not support Speech Recognition."
+                    );
+
+
+                    return;
+                }
+
+
+                if (isListening) {
+
+
+                    recognition.stop();
+
+
+                    return;
+                }
+
+
+                try {
+
+
+                    recognition.start();
+
+
+                }
+
+                catch (error) {
+
+
+                    console.error(
+                        error
+                    );
+
+                }
+
+            }
+        );
+
+
+
+        /* ==========================================
+           SEND COMMAND
+        ========================================== */
+
+        async function sendCommand(
+            commandText
+        ) {
+
+
+            try {
+
+
+                status.textContent =
+                    "CONNECTING TO NOVA CORE...";
+
+
+                const response =
+                    await fetch(
+                        "/agent",
+                        {
+
+                            method: "POST",
+
+                            headers: {
+
+                                "Content-Type":
+                                    "application/json"
+
+                            },
+
+                            body:
+                                JSON.stringify({
+
+                                    command:
+                                        commandText
+
+                                })
+
+                        }
+                    );
+
+
+                if (!response.ok) {
+
+
+                    throw new Error(
+                        `Server error: ${response.status}`
+                    );
+
+                }
+
+
+                const data =
+                    await response.json();
+
+
+                console.log(
+                    "Agent response:",
+                    data
+                );
+
+
+                if (data.success) {
+
+
+                    status.textContent =
+                        data.message ||
+                        "COMMAND EXECUTED";
+
+
+                    if (data.url) {
+
+
+                        setTimeout(
+                            function () {
+
+
+                                window.open(
+                                    data.url,
+                                    "_blank"
+                                );
+
+
+                            },
+                            600
+                        );
+
+                    }
+
+                }
+
+                else {
+
+
+                    status.textContent =
+                        data.message ||
+                        "COMMAND FAILED";
+
+                }
+
+
+            }
+
+            catch (error) {
+
+
+                console.error(
+                    "Agent error:",
+                    error
+                );
+
+
+                status.textContent =
+                    "AGENT CONNECTION FAILED";
+
+            }
+
+        }
+
+
+
+        /* ==========================================
+           COMMAND CHIP CLICK
+        ========================================== */
+
+        document
+            .querySelectorAll(
+                ".command-chip"
+            )
+            .forEach(
+                function (chip) {
+
+
+                    chip.addEventListener(
+                        "click",
+                        function () {
+
+
+                            const command =
+                                this.dataset.command;
+
+
+                            transcript.textContent =
+                                command;
+
+
+                            sendCommand(
+                                command
+                            );
+
+                        }
+                    );
+
+                }
+            );
+
+
+
+        /* ==========================================
+           START REAR CAMERA
+        ========================================== */
+
+        async function startCamera() {
+
+
+            try {
+
+
+                if (
+                    !navigator.mediaDevices ||
+                    !navigator.mediaDevices.getUserMedia
+                ) {
+
+
+                    console.warn(
+                        "Camera API not supported."
+                    );
+
+
+                    return;
+                }
+
+
+                const stream =
+                    await navigator
+                        .mediaDevices
+                        .getUserMedia({
+
+                            video: {
+
+                                /*
+                                 * BACK / REAR CAMERA
+                                 */
+
+                                facingMode: {
+                                    ideal:
+                                        "environment"
+                                },
+
+
+                                width: {
+                                    ideal: 1920
+                                },
+
+
+                                height: {
+                                    ideal: 1080
+                                }
+
+                            },
+
+
+                            audio: false
+
+                        });
+
+
+                cameraBackground.srcObject =
+                    stream;
+
+
+                console.log(
+                    "Rear camera started."
+                );
+
+
+            }
+
+            catch (error) {
+
+
+                console.error(
+                    "Camera error:",
+                    error
+                );
+
+
+                cameraBackground.style.display =
+                    "none";
+
+            }
+
+        }
+
+
+
+        /* ==========================================
+           INITIALIZE CAMERA
+        ========================================== */
+
+        startCamera();
+
+
+
+        /* ==========================================
+           DRAG VARIABLES
+        ========================================== */
+
+        let isDragging = false;
+
+
+        let startX = 0;
+
+        let startY = 0;
+
+
+        let startLeft = 0;
+
+        let startTop = 0;
+
+
+
+        /* ==========================================
+           GET SAFE CARD POSITION
+        ========================================== */
+
+        function prepareCardForDrag() {
+
+
+            const rect =
+                draggableCard
+                    .getBoundingClientRect();
+
+
+            draggableCard.style.position =
+                "fixed";
+
+
+            draggableCard.style.left =
+                `${rect.left}px`;
+
+
+            draggableCard.style.top =
+                `${rect.top}px`;
+
+
+            draggableCard.style.margin =
+                "0";
+
+
+            return rect;
+
+        }
+
+
+
+        /* ==========================================
+           MOUSE DOWN
+        ========================================== */
+
+        draggableCard.addEventListener(
+            "mousedown",
+            function (event) {
+
+
+                /*
+                 * Don't drag when clicking
+                 * buttons.
+                 */
+
+                if (
+                    event.target.closest(
+                        "button"
+                    )
+                ) {
+
+                    return;
+                }
+
+
+                const rect =
+                    prepareCardForDrag();
+
+
+                isDragging = true;
+
+
+                draggableCard.classList.add(
+                    "dragging"
+                );
+
+
+                startX =
+                    event.clientX;
+
+
+                startY =
+                    event.clientY;
+
+
+                startLeft =
+                    rect.left;
+
+
+                startTop =
+                    rect.top;
+
+
+                event.preventDefault();
+
+            }
+        );
+
+
+
+        /* ==========================================
+           MOUSE MOVE
+        ========================================== */
+
+        document.addEventListener(
+            "mousemove",
+            function (event) {
+
+
+                if (!isDragging) {
+
+                    return;
+                }
+
+
+                const deltaX =
+                    event.clientX -
+                    startX;
+
+
+                const deltaY =
+                    event.clientY -
+                    startY;
+
+
+                moveCard(
+                    startLeft + deltaX,
+                    startTop + deltaY
+                );
+
+            }
+        );
+
+
+
+        /* ==========================================
+           MOUSE UP
+        ========================================== */
+
+        document.addEventListener(
+            "mouseup",
+            function () {
+
+
+                if (!isDragging) {
+
+                    return;
+                }
+
+
+                isDragging = false;
+
+
+                draggableCard.classList.remove(
+                    "dragging"
+                );
+
+            }
+        );
+
+
+
+        /* ==========================================
+           TOUCH START
+        ========================================== */
+
+        draggableCard.addEventListener(
+            "touchstart",
+            function (event) {
+
+
+                /*
+                 * Don't drag buttons.
+                 */
+
+                if (
+                    event.target.closest(
+                        "button"
+                    )
+                ) {
+
+                    return;
+                }
+
+
+                const touch =
+                    event.touches[0];
+
+
+                const rect =
+                    prepareCardForDrag();
+
+
+                isDragging = true;
+
+
+                draggableCard.classList.add(
+                    "dragging"
+                );
+
+
+                startX =
+                    touch.clientX;
+
+
+                startY =
+                    touch.clientY;
+
+
+                startLeft =
+                    rect.left;
+
+
+                startTop =
+                    rect.top;
+
+
+                event.preventDefault();
+
+            },
+            {
+                passive: false
+            }
+        );
+
+
+
+        /* ==========================================
+           TOUCH MOVE
+        ========================================== */
+
+        document.addEventListener(
+            "touchmove",
+            function (event) {
+
+
+                if (!isDragging) {
+
+                    return;
+                }
+
+
+                const touch =
+                    event.touches[0];
+
+
+                const deltaX =
+                    touch.clientX -
+                    startX;
+
+
+                const deltaY =
+                    touch.clientY -
+                    startY;
+
+
+                moveCard(
+                    startLeft + deltaX,
+                    startTop + deltaY
+                );
+
+
+                event.preventDefault();
+
+            },
+            {
+                passive: false
+            }
+        );
+
+
+
+        /* ==========================================
+           TOUCH END
+        ========================================== */
+
+        document.addEventListener(
+            "touchend",
+            function () {
+
+
+                if (!isDragging) {
+
+                    return;
+                }
+
+
+                isDragging = false;
+
+
+                draggableCard.classList.remove(
+                    "dragging"
+                );
+
+            }
+        );
+
+
+
+        /* ==========================================
+           MOVE CARD
+        ========================================== */
+
+        function moveCard(
+            newLeft,
+            newTop
+        ) {
+
+
+            const rect =
+                draggableCard
+                    .getBoundingClientRect();
+
+
+            const maxLeft =
+                window.innerWidth -
+                rect.width;
+
+
+            const maxTop =
+                window.innerHeight -
+                rect.height;
+
+
+            newLeft =
+                Math.max(
+                    0,
+                    Math.min(
+                        newLeft,
+                        maxLeft
+                    )
+                );
+
+
+            newTop =
+                Math.max(
+                    0,
+                    Math.min(
+                        newTop,
+                        maxTop
+                    )
+                );
+
+
+            draggableCard.style.left =
+                `${newLeft}px`;
+
+
+            draggableCard.style.top =
+                `${newTop}px`;
+
+        }
+
+
+
+        /* ==========================================
+           STOP CAMERA ON PAGE CLOSE
+        ========================================== */
+
+        window.addEventListener(
+            "beforeunload",
+            function () {
+
+
+                const stream =
+                    cameraBackground
+                        .srcObject;
+
+
+                if (stream) {
+
+
+                    stream
+                        .getTracks()
+                        .forEach(
+                            function (track) {
+
+                                track.stop();
+
+                            }
+                        );
+
+                }
+
+            }
+        );
+
+
+
+    </script>
+
+</body>
+
+</html>
