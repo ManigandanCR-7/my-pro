@@ -27,7 +27,7 @@ CLIENT_EMAIL = os.environ.get("CLIENT_EMAIL", "")
 
 GEMINI_MODEL = os.environ.get(
     "GEMINI_MODEL",
-    "gemini-3.8-flash"
+    "gemini-3.6-flash"
 )
 
 PORT = int(os.environ.get("PORT", 8000))
