@@ -2,1207 +2,1710 @@
 <html lang="en">
 
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <title>Nova AI // Next-Gen Voice Agent</title>
+    <meta charset="UTF-8">
 
-  <link
-    href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
-    rel="stylesheet">
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
 
-  <style>
-    :root {
-      --bg: #030305;
-      --primary: #7c3aed;
-      --secondary: #4f46e5;
-      --text: #ffffff;
-      --text-muted: #a1a1aa;
-      --border: rgba(255, 255, 255, 0.12);
-    }
+    <title>Nova AI // Next-Gen Voice Agent</title>
 
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
+    <!-- Google Fonts -->
+    <link
+        rel="preconnect"
+        href="https://fonts.googleapis.com"
+    >
 
-    body {
-      min-height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 1rem;
-      background: var(--bg);
-      font-family: "Plus Jakarta Sans", sans-serif;
-      color: var(--text);
-      overflow: hidden;
-      position: relative;
-    }
+    <link
+        rel="preconnect"
+        href="https://fonts.gstatic.com"
+        crossorigin
+    >
 
-    /* Camera background */
-    #cameraBackground {
-      position: fixed;
-      inset: 0;
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      background: #000;
-    }
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet"
+    >
 
-    .camera-overlay {
-      position: fixed;
-      inset: 0;
-      background: linear-gradient(
-        135deg,
-        rgba(0, 0, 0, .45),
-        rgba(0, 0, 0, .18),
-        rgba(0, 0, 0, .5)
-      );
-      pointer-events: none;
-    }
+    <!-- Tailwind -->
+    <script src="https://cdn.tailwindcss.com"></script>
 
-    .camera-glow {
-      position: fixed;
-      inset: 0;
-      background: radial-gradient(
-        circle at center,
-        transparent 15%,
-        rgba(0, 0, 0, .25) 70%,
-        rgba(0, 0, 0, .65) 100%
-      );
-      pointer-events: none;
-    }
+    <style>
 
-    /* Main card */
-    .container {
-      width: 100%;
-      max-width: 420px;
-      padding: 1.35rem 1.6rem;
-      background: rgba(18, 18, 26, 0.68);
-      backdrop-filter: blur(22px);
-      border: 1px solid var(--border);
-      border-radius: 24px;
-      box-shadow:
-        0 20px 45px rgba(0, 0, 0, .5),
-        inset 0 1px 0 rgba(255, 255, 255, .12);
-      position: relative;
-      z-index: 10;
-      opacity: 0;
-      cursor: grab;
-      touch-action: none;
-      user-select: none;
-      animation: entrance 1.2s cubic-bezier(.16, 1, .3, 1) forwards;
-    }
+        * {
+            box-sizing: border-box;
+        }
 
-    .container.dragging {
-      cursor: grabbing;
-      transition: none;
-    }
+        html,
+        body {
+            width: 100%;
+            height: 100%;
+            margin: 0;
+            overflow: hidden;
+            font-family: "Inter", sans-serif;
+            background: #050505;
+            color: white;
+        }
 
-    @keyframes entrance {
-      from {
-        opacity: 0;
-        transform: translateY(50px) scale(.94);
-      }
+        /* ==========================================
+           CAMERA BACKGROUND
+        ========================================== */
 
-      to {
-        opacity: 1;
-        transform: translateY(0) scale(1);
-      }
-    }
+        #cameraBackground {
 
-    /* Header */
-    .header {
-      text-align: center;
-      margin-bottom: 1rem;
-    }
+            position: fixed;
 
-    .status-indicator {
-      display: inline-flex;
-      align-items: center;
-      gap: 7px;
-      padding: 4px 9px;
-      margin-bottom: .5rem;
-      border-radius: 999px;
-      background: rgba(255, 255, 255, .06);
-      border: 1px solid rgba(255, 255, 255, .1);
-      font-family: "JetBrains Mono", monospace;
-      font-size: .58rem;
-      color: #d4d4d8;
-    }
+            inset: 0;
 
-    .status-dot {
-      width: 6px;
-      height: 6px;
-      border-radius: 50%;
-      background: #22c55e;
-      box-shadow: 0 0 10px #22c55e;
-      animation: pulse 2s infinite;
-    }
+            width: 100%;
+            height: 100%;
 
-    @keyframes pulse {
-      50% {
-        opacity: .4;
-      }
-    }
+            object-fit: cover;
 
-    .title {
-      font-size: 1.75rem;
-      font-weight: 800;
-      letter-spacing: -.04em;
-      margin-bottom: .35rem;
-      background: linear-gradient(135deg, #fff, #c4b5fd);
-      -webkit-background-clip: text;
-      background-clip: text;
-      color: transparent;
-    }
+            z-index: 0;
 
-    .subtitle {
-      font-family: "JetBrains Mono", monospace;
-      font-size: .68rem;
-      color: var(--text-muted);
-    }
+            filter:
+                brightness(0.32)
+                contrast(1.1)
+                saturate(0.8);
 
-    /* Mic + rings */
-    .visualizer-container {
-      position: relative;
-      width: 125px;
-      height: 125px;
-      margin: 0 auto 1rem;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
+        }
 
-    .ring {
-      position: absolute;
-      border-radius: 50%;
-      border: 1px solid rgba(167, 139, 250, .25);
-    }
+        /* ==========================================
+           BACKGROUND OVERLAY
+        ========================================== */
 
-    .ring-1 {
-      width: 100%;
-      height: 100%;
-      animation: rot 12s linear infinite;
-    }
+        .background-overlay {
 
-    .ring-2 {
-      width: 80%;
-      height: 80%;
-      border-color: rgba(124, 58, 237, .35);
-      animation: rot 9s linear infinite reverse;
-    }
+            position: fixed;
 
-    @keyframes rot {
-      to {
-        transform: rotate(360deg);
-      }
-    }
+            inset: 0;
 
-    .mic-btn {
-      width: 76px;
-      height: 76px;
-      border-radius: 50%;
-      border: none;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      position: relative;
-      z-index: 5;
-      background: linear-gradient(
-        135deg,
-        var(--primary),
-        var(--secondary)
-      );
-      box-shadow: 0 10px 30px rgba(79, 70, 229, .4);
-      transition: transform .25s, box-shadow .25s;
-    }
+            z-index: 1;
 
-    .mic-btn:hover {
-      transform: scale(1.06);
-    }
+            background:
+                radial-gradient(
+                    circle at center,
+                    rgba(0, 0, 0, 0.05),
+                    rgba(0, 0, 0, 0.75)
+                );
 
-    .mic-btn.listening {
-      background: linear-gradient(135deg, #ef4444, #dc2626);
-      animation: micPulse 1.5s infinite;
-    }
+            pointer-events: none;
 
-    @keyframes micPulse {
-      0% {
-        box-shadow: 0 0 0 0 rgba(239, 68, 68, .55);
-      }
+        }
 
-      70% {
-        box-shadow: 0 0 0 20px rgba(239, 68, 68, 0);
-      }
+        /* ==========================================
+           MAIN APP
+        ========================================== */
 
-      100% {
-        box-shadow: 0 0 0 0 rgba(239, 68, 68, 0);
-      }
-    }
+        .app {
 
-    .mic-icon {
-      width: 27px;
-      height: 27px;
-      fill: #fff;
-    }
+            position: relative;
 
-    /* Status + transcript + wave */
-    .status-box {
-      margin-bottom: .7rem;
-      text-align: center;
-    }
+            z-index: 5;
 
-    #status {
-      font-family: "JetBrains Mono", monospace;
-      font-size: .62rem;
-      color: #d4d4d8;
-    }
+            width: 100%;
+            height: 100vh;
 
-    .transcript {
-      min-height: 38px;
-      padding: .55rem .75rem;
-      border-radius: 10px;
-      background: rgba(0, 0, 0, .25);
-      border: 1px solid rgba(255, 255, 255, .08);
-      font-family: "JetBrains Mono", monospace;
-      font-size: .58rem;
-      color: #d4d4d8;
-      margin-bottom: .7rem;
-      text-align: center;
-    }
+        }
 
-    .wave {
-      height: 18px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 3px;
-      margin-bottom: .65rem;
-    }
+        /* ==========================================
+           HEADER
+        ========================================== */
 
-    .wave span {
-      width: 2px;
-      height: 4px;
-      border-radius: 2px;
-      background: #8b5cf6;
-      transition: height .2s;
-    }
+        .topbar {
 
-    .wave.active span {
-      animation: waveAnim .8s ease-in-out infinite alternate;
-    }
+            position: absolute;
 
-    .wave span:nth-child(1),
-    .wave span:nth-child(8) {
-      animation-delay: 0s;
-    }
+            top: 25px;
+            left: 30px;
+            right: 30px;
 
-    .wave span:nth-child(2),
-    .wave span:nth-child(7) {
-      animation-delay: .1s;
-    }
+            display: flex;
 
-    .wave span:nth-child(3),
-    .wave span:nth-child(6) {
-      animation-delay: .2s;
-    }
+            justify-content: space-between;
 
-    .wave span:nth-child(4),
-    .wave span:nth-child(5) {
-      animation-delay: .3s;
-    }
+            align-items: center;
 
-    @keyframes waveAnim {
-      from {
-        height: 4px;
-      }
+            z-index: 20;
 
-      to {
-        height: 17px;
-      }
-    }
+        }
 
-    /* Command chips */
-    .commands-title {
-      font-family: "JetBrains Mono", monospace;
-      font-size: .55rem;
-      letter-spacing: .1em;
-      text-transform: uppercase;
-      color: #71717a;
-      text-align: center;
-      margin-bottom: .45rem;
-    }
+        .logo {
 
-    .commands {
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: center;
-      gap: 5px;
-    }
+            display: flex;
 
-    .command-chip {
-      padding: 6px 8px;
-      border-radius: 8px;
-      border: 1px solid rgba(255, 255, 255, .08);
-      background: rgba(255, 255, 255, .04);
-      color: #a1a1aa;
-      font-family: "JetBrains Mono", monospace;
-      font-size: .55rem;
-      cursor: pointer;
-      transition: all .2s;
-    }
+            align-items: center;
 
-    .command-chip:hover {
-      color: #fff;
-      background: rgba(124, 58, 237, .18);
-      border-color: rgba(167, 139, 250, .35);
-    }
+            gap: 12px;
 
-    @media (max-width: 600px) {
-      .container {
-        width: 90%;
-        max-width: 360px;
-        padding: 1.1rem 1rem;
-        border-radius: 21px;
-      }
+            font-weight: 800;
 
-      .title {
-        font-size: 1.45rem;
-      }
+            letter-spacing: 0.08em;
 
-      .visualizer-container {
-        width: 105px;
-        height: 105px;
-      }
+            font-size: 16px;
 
-      .mic-btn {
-        width: 66px;
-        height: 66px;
-      }
+        }
 
-      .mic-icon {
-        width: 24px;
-        height: 24px;
-      }
-    }
-  </style>
+        .logo-dot {
+
+            width: 10px;
+            height: 10px;
+
+            border-radius: 50%;
+
+            background: white;
+
+            box-shadow:
+                0 0 15px rgba(255,255,255,0.9);
+
+        }
+
+        .online {
+
+            display: flex;
+
+            align-items: center;
+
+            gap: 8px;
+
+            font-size: 11px;
+
+            color: rgba(255,255,255,0.65);
+
+            letter-spacing: 0.12em;
+
+        }
+
+        .online-dot {
+
+            width: 7px;
+            height: 7px;
+
+            border-radius: 50%;
+
+            background: #55ff8a;
+
+            box-shadow:
+                0 0 12px rgba(85,255,138,0.9);
+
+        }
+
+        /* ==========================================
+           MAIN CARD
+        ========================================== */
+
+        #voiceCard {
+
+            position: absolute;
+
+            left: 50%;
+            top: 50%;
+
+            transform:
+                translate(-50%, -50%);
+
+            width: min(460px, 90vw);
+
+            padding: 34px;
+
+            border-radius: 28px;
+
+            background:
+                rgba(255,255,255,0.075);
+
+            border:
+                1px solid
+                rgba(255,255,255,0.14);
+
+            backdrop-filter:
+                blur(28px);
+
+            -webkit-backdrop-filter:
+                blur(28px);
+
+            box-shadow:
+                0 30px 100px
+                rgba(0,0,0,0.45),
+
+                inset 0 1px 0
+                rgba(255,255,255,0.08);
+
+            cursor: grab;
+
+            user-select: none;
+
+        }
+
+        #voiceCard.dragging {
+
+            cursor: grabbing;
+
+            transition: none;
+
+        }
+
+        /* ==========================================
+           CARD HEADER
+        ========================================== */
+
+        .card-header {
+
+            text-align: center;
+
+            margin-bottom: 28px;
+
+        }
+
+        .card-title {
+
+            font-size: 30px;
+
+            font-weight: 800;
+
+            letter-spacing: -0.04em;
+
+        }
+
+        .card-subtitle {
+
+            margin-top: 8px;
+
+            font-size: 12px;
+
+            color:
+                rgba(255,255,255,0.48);
+
+            letter-spacing:
+                0.13em;
+
+            text-transform:
+                uppercase;
+
+        }
+
+        /* ==========================================
+           MICROPHONE
+        ========================================== */
+
+        .mic-area {
+
+            display: flex;
+
+            justify-content: center;
+
+            align-items: center;
+
+            margin: 15px 0 25px;
+
+        }
+
+        #micButton {
+
+            width: 125px;
+            height: 125px;
+
+            border-radius: 50%;
+
+            border: 1px solid
+                rgba(255,255,255,0.25);
+
+            background:
+                rgba(255,255,255,0.08);
+
+            display: flex;
+
+            justify-content: center;
+
+            align-items: center;
+
+            cursor: pointer;
+
+            transition:
+                transform 0.2s ease,
+                background 0.2s ease,
+                box-shadow 0.2s ease;
+
+            box-shadow:
+                0 0 0 rgba(255,255,255,0);
+
+        }
+
+        #micButton:hover {
+
+            transform:
+                scale(1.05);
+
+            background:
+                rgba(255,255,255,0.14);
+
+        }
+
+        #micButton.listening {
+
+            animation:
+                micPulse 1.4s infinite;
+
+        }
+
+        @keyframes micPulse {
+
+            0% {
+                box-shadow:
+                    0 0 0 0
+                    rgba(255,255,255,0.35);
+            }
+
+            70% {
+                box-shadow:
+                    0 0 0 25px
+                    rgba(255,255,255,0);
+            }
+
+            100% {
+                box-shadow:
+                    0 0 0 0
+                    rgba(255,255,255,0);
+            }
+
+        }
+
+        .mic-icon {
+
+            width: 42px;
+            height: 42px;
+
+            fill: white;
+
+        }
+
+        /* ==========================================
+           STATUS
+        ========================================== */
+
+        #status {
+
+            text-align: center;
+
+            font-size: 10px;
+
+            letter-spacing:
+                0.14em;
+
+            color:
+                rgba(255,255,255,0.58);
+
+            min-height: 16px;
+
+            margin-bottom: 15px;
+
+        }
+
+        /* ==========================================
+           TRANSCRIPT
+        ========================================== */
+
+        .transcript-box {
+
+            min-height: 75px;
+
+            padding: 15px;
+
+            border-radius: 16px;
+
+            background:
+                rgba(0,0,0,0.18);
+
+            border:
+                1px solid
+                rgba(255,255,255,0.08);
+
+        }
+
+        .transcript-label {
+
+            font-size: 9px;
+
+            color:
+                rgba(255,255,255,0.38);
+
+            letter-spacing:
+                0.12em;
+
+            text-transform:
+                uppercase;
+
+            margin-bottom: 7px;
+
+        }
+
+        #transcript {
+
+            font-size: 13px;
+
+            line-height: 1.5;
+
+            color:
+                rgba(255,255,255,0.82);
+
+            word-break: break-word;
+
+        }
+
+        /* ==========================================
+           COMMAND CHIPS
+        ========================================== */
+
+        .commands {
+
+            margin-top: 18px;
+
+            display: flex;
+
+            flex-wrap: wrap;
+
+            justify-content: center;
+
+            gap: 8px;
+
+        }
+
+        .command-chip {
+
+            border: 1px solid
+                rgba(255,255,255,0.1);
+
+            background:
+                rgba(255,255,255,0.055);
+
+            color:
+                rgba(255,255,255,0.68);
+
+            padding:
+                8px 12px;
+
+            border-radius: 999px;
+
+            font-size: 10px;
+
+            cursor: pointer;
+
+            transition:
+                all 0.2s ease;
+
+        }
+
+        .command-chip:hover {
+
+            background:
+                rgba(255,255,255,0.12);
+
+            color: white;
+
+            transform:
+                translateY(-2px);
+
+        }
+
+        /* ==========================================
+           FOOTER
+        ========================================== */
+
+        .footer {
+
+            position: absolute;
+
+            bottom: 22px;
+
+            left: 0;
+            right: 0;
+
+            text-align: center;
+
+            z-index: 20;
+
+            font-size: 9px;
+
+            color:
+                rgba(255,255,255,0.3);
+
+            letter-spacing:
+                0.12em;
+
+        }
+
+        /* ==========================================
+           MOBILE
+        ========================================== */
+
+        @media (max-width: 600px) {
+
+            .topbar {
+
+                top: 18px;
+                left: 18px;
+                right: 18px;
+
+            }
+
+            #voiceCard {
+
+                padding: 25px;
+
+                width: 92vw;
+
+            }
+
+            .card-title {
+
+                font-size: 25px;
+
+            }
+
+            #micButton {
+
+                width: 105px;
+                height: 105px;
+
+            }
+
+        }
+
+    </style>
+
 </head>
+
 
 <body>
 
-  <video id="cameraBackground" autoplay playsinline muted></video>
+    <!-- ==========================================
+         CAMERA
+    ========================================== -->
 
-  <div class="camera-overlay"></div>
-  <div class="camera-glow"></div>
+    <video
+        id="cameraBackground"
+        autoplay
+        muted
+        playsinline
+    ></video>
 
-  <main class="container" id="novaCard">
 
-    <header class="header">
+    <div class="background-overlay"></div>
 
-      <div class="status-indicator">
-        <span class="status-dot"></span>
-        NEURAL CORE ONLINE
-      </div>
 
-      <h1 class="title">Nova AI</h1>
+    <!-- ==========================================
+         APP
+    ========================================== -->
 
-      <p class="subtitle">
-        NEXT-GEN VOICE AGENT
-      </p>
+    <main class="app">
 
-    </header>
 
-    <div class="visualizer-container">
+        <!-- ======================================
+             TOP BAR
+        ======================================= -->
 
-      <div class="ring ring-1"></div>
-      <div class="ring ring-2"></div>
+        <header class="topbar">
 
-      <button
-        id="micBtn"
-        class="mic-btn"
-        aria-label="Start voice command">
+            <div class="logo">
 
-        <svg
-          class="mic-icon"
-          viewBox="0 0 24 24">
+                <span class="logo-dot"></span>
 
-          <path d="M12 14a3 3 0 0 0 3-3V6a3 3 0 0 0-6 0v5a3 3 0 0 0 3 3z"/>
+                NOVA AI
 
-          <path d="M19 11a7 7 0 0 1-14 0"/>
+            </div>
 
-          <line x1="12" y1="18" x2="12" y2="22"/>
 
-          <line x1="8" y1="22" x2="16" y2="22"/>
+            <div class="online">
 
-        </svg>
+                <span class="online-dot"></span>
 
-      </button>
+                CORE ONLINE
 
-    </div>
+            </div>
 
-    <div class="status-box">
-      <span id="status">
-        CLICK THE MIC TO START
-      </span>
-    </div>
+        </header>
 
-    <div id="transcript" class="transcript">
-      Your voice command will appear here...
-    </div>
 
-    <div id="wave" class="wave">
-      <span></span>
-      <span></span>
-      <span></span>
-      <span></span>
-      <span></span>
-      <span></span>
-      <span></span>
-      <span></span>
-    </div>
+        <!-- ======================================
+             VOICE CARD
+        ======================================= -->
 
-    <div class="commands-title">
-      TRY SAYING
-    </div>
+        <section id="voiceCard">
 
-    <div class="commands">
 
-      <button
-        class="command-chip"
-        data-command="Open YouTube and play Karuppu song">
-        Open YouTube & play Karuppu
-      </button>
+            <div class="card-header">
 
-      <button
-        class="command-chip"
-        data-command="Email john at gmail.com type hello">
-        Email John
-      </button>
+                <div class="card-title">
+                    Nova Voice Agent
+                </div>
 
-      <button
-        class="command-chip"
-        data-command="Open Google">
-        Open Google
-      </button>
+                <div class="card-subtitle">
+                    Speak. Command. Execute.
+                </div>
 
-    </div>
+            </div>
 
-  </main>
 
+            <!-- ==================================
+                 MICROPHONE
+            =================================== -->
 
-  <script>
+            <div class="mic-area">
 
-    const micBtn = document.getElementById("micBtn");
-    const status = document.getElementById("status");
-    const transcript = document.getElementById("transcript");
-    const wave = document.getElementById("wave");
-    const cam = document.getElementById("cameraBackground");
-    const card = document.getElementById("novaCard");
+                <button
+                    id="micButton"
+                    type="button"
+                    aria-label="Start voice recognition"
+                >
 
+                    <svg
+                        class="mic-icon"
+                        viewBox="0 0 24 24"
+                    >
 
-    /* =========================================================
-       GMAIL TAB MANAGEMENT
-       ========================================================= */
+                        <path
+                            d="M12 14a3 3 0 0 0 3-3V6a3 3 0 0 0-6 0v5a3 3 0 0 0 3 3Z"
+                        />
 
-    /*
-       This variable stores the Gmail browser window.
+                        <path
+                            d="M17.3 11a5.3 5.3 0 0 1-10.6 0H5a7 7 0 0 0 6 6.92V21H8v2h8v-2h-3v-3.08A7 7 0 0 0 19 11h-1.7Z"
+                        />
 
-       Instead of opening:
-           "_blank"
+                    </svg>
 
-       we use a fixed window name:
+                </button>
 
-           "NovaGmailWindow"
+            </div>
 
-       Browser behavior:
-       - First Gmail request  -> opens Gmail
-       - Second Gmail request -> reuses same tab
-       - Third Gmail request  -> reuses same tab
-    */
 
-    let gmailWindow = null;
+            <!-- ==================================
+                 STATUS
+            =================================== -->
 
+            <div id="status">
+                READY FOR COMMAND
+            </div>
 
-    function openGmail(url) {
 
-      /*
-         If the Gmail window already exists and is still open,
-         simply update its URL.
-      */
+            <!-- ==================================
+                 TRANSCRIPT
+            =================================== -->
 
-      if (gmailWindow && !gmailWindow.closed) {
+            <div class="transcript-box">
 
-        gmailWindow.location.href = url;
+                <div class="transcript-label">
+                    Voice Command
+                </div>
 
-        try {
-          gmailWindow.focus();
-        } catch (e) {
-          console.log("Unable to focus Gmail window.");
-        }
+                <div id="transcript">
+                    Say something like:
+                    "Open Gmail and write an email..."
+                </div>
 
-        return;
-      }
+            </div>
 
 
-      /*
-         Create the Gmail window using a FIXED window name.
+            <!-- ==================================
+                 QUICK COMMANDS
+            =================================== -->
 
-         This is the important part.
+            <div class="commands">
 
-         Do NOT use "_blank" here.
-      */
+                <button
+                    class="command-chip"
+                    data-command="Open YouTube and play a relaxing music video"
+                >
+                    ▶ YouTube
+                </button>
 
-      gmailWindow = window.open(
-        url,
-        "NovaGmailWindow"
-      );
 
+                <button
+                    class="command-chip"
+                    data-command="Open Gmail and write an email to my client about our new business proposal"
+                >
+                    ✉ Gmail
+                </button>
 
-      /*
-         If the browser returned a valid window,
-         bring it to the front.
-      */
 
-      if (gmailWindow) {
+                <button
+                    class="command-chip"
+                    data-command="Search Google for latest artificial intelligence news"
+                >
+                    🔎 Google
+                </button>
 
-        try {
-          gmailWindow.focus();
-        } catch (e) {
-          console.log("Unable to focus Gmail window.");
-        }
+            </div>
 
-      } else {
 
-        /*
-           Popup blocked by browser.
-        */
+        </section>
 
-        status.textContent =
-          "PLEASE ALLOW POPUPS FOR NOVA AI";
 
-      }
+        <!-- ======================================
+             FOOTER
+        ======================================= -->
 
-    }
+        <footer class="footer">
 
+            NOVA AI // NEXT-GEN VOICE AGENT
 
-    /* =========================================================
-       GENERAL URL OPENER
-       ========================================================= */
+        </footer>
 
-    function openAgentResult(url) {
 
-      if (!url) {
-        return;
-      }
+    </main>
 
 
-      /*
-         Check whether the backend returned a Gmail URL.
+    <script>
 
-         Your Flask backend generates URLs containing:
+        // ==================================================
+        // ELEMENTS
+        // ==================================================
 
-             mail.google.com
-      */
+        const micButton =
+            document.getElementById("micButton");
 
-      const isGmail =
-        url.includes("mail.google.com");
+        const status =
+            document.getElementById("status");
 
+        const transcript =
+            document.getElementById("transcript");
 
-      if (isGmail) {
+        const voiceCard =
+            document.getElementById("voiceCard");
 
-        /*
-           Gmail gets its dedicated reusable tab.
-        */
-
-        openGmail(url);
-
-      } else {
-
-        /*
-           Other services such as YouTube continue
-           opening normally in a separate tab.
-        */
-
-        const otherWindow =
-          window.open(url, "_blank");
-
-        if (otherWindow) {
-          otherWindow.focus();
-        }
-
-      }
-
-    }
-
-
-    /* =========================================================
-       SPEECH RECOGNITION
-       ========================================================= */
-
-    const SR =
-      window.SpeechRecognition ||
-      window.webkitSpeechRecognition;
-
-    let recog;
-    let listening = false;
-
-
-    if (SR) {
-
-      recog = new SR();
-
-      recog.continuous = false;
-      recog.interimResults = false;
-      recog.lang = "en-US";
-
-
-      recog.onstart = () => {
-
-        listening = true;
-
-        micBtn.classList.add("listening");
-        wave.classList.add("active");
-
-        status.textContent =
-          "LISTENING...";
-
-        transcript.textContent =
-          "Speak your command...";
-
-      };
-
-
-      recog.onresult = (e) => {
-
-        const cmd =
-          e.results[0][0].transcript;
-
-        transcript.textContent = cmd;
-
-        status.textContent =
-          "PROCESSING COMMAND...";
-
-        sendCommand(cmd);
-
-      };
-
-
-      recog.onend = () => {
-
-        listening = false;
-
-        micBtn.classList.remove("listening");
-        wave.classList.remove("active");
-
-
-        if (
-          status.textContent ===
-          "LISTENING..."
-        ) {
-
-          status.textContent =
-            "CLICK THE MIC TO START";
-
-        }
-
-      };
-
-
-      recog.onerror = (e) => {
-
-        listening = false;
-
-        micBtn.classList.remove("listening");
-        wave.classList.remove("active");
-
-
-        status.textContent =
-          e.error === "not-allowed"
-            ? "MICROPHONE PERMISSION DENIED"
-            : e.error === "no-speech"
-              ? "NO SPEECH DETECTED"
-              : "VOICE ERROR";
-
-      };
-
-    } else {
-
-      status.textContent =
-        "VOICE RECOGNITION NOT SUPPORTED";
-
-    }
-
-
-    /* =========================================================
-       MIC BUTTON
-       ========================================================= */
-
-    micBtn.addEventListener("click", () => {
-
-      if (!recog) {
-
-        alert(
-          "Your browser does not support Speech Recognition."
-        );
-
-        return;
-      }
-
-
-      if (listening) {
-
-        recog.stop();
-
-        return;
-      }
-
-
-      try {
-
-        recog.start();
-
-      } catch (e) {
-
-        console.error(e);
-
-      }
-
-    });
-
-
-    /* =========================================================
-       SEND COMMAND TO BACKEND
-       ========================================================= */
-
-    async function sendCommand(cmdText) {
-
-      try {
-
-        status.textContent =
-          "CONNECTING TO NOVA CORE...";
-
-
-        const res = await fetch(
-          "/agent",
-          {
-            method: "POST",
-
-            headers: {
-              "Content-Type":
-                "application/json"
-            },
-
-            body: JSON.stringify({
-              command: cmdText
-            })
-          }
-        );
-
-
-        if (!res.ok) {
-
-          throw new Error(
-            `Server error: ${res.status}`
-          );
-
-        }
-
-
-        const data =
-          await res.json();
-
-
-        if (data.success) {
-
-          status.textContent =
-            data.message ||
-            "COMMAND EXECUTED";
-
-
-          /*
-             IMPORTANT:
-
-             We no longer do:
-
-                 window.open(data.url, "_blank")
-
-             Instead everything goes through:
-
-                 openAgentResult()
-
-             Gmail -> one reusable tab
-             YouTube/others -> normal new tab
-          */
-
-          if (data.url) {
-
-            openAgentResult(
-              data.url
+        const cameraBackground =
+            document.getElementById(
+                "cameraBackground"
             );
 
-          }
+
+        // ==================================================
+        // GMAIL WINDOW
+        // ==================================================
+
+        /*
+         * IMPORTANT:
+         *
+         * We keep ONE Gmail window.
+         *
+         * Every new Gmail command will reuse
+         * the same browser window instead of
+         * opening another tab.
+         */
+
+        let gmailWindow = null;
+
+
+        // ==================================================
+        // OPEN GMAIL
+        // ==================================================
+
+        function openGmail(url) {
+
+            if (!url) {
+                return;
+            }
+
+
+            // ----------------------------------------------
+            // Existing Gmail window
+            // ----------------------------------------------
+
+            if (
+                gmailWindow &&
+                !gmailWindow.closed
+            ) {
+
+                gmailWindow.location.href =
+                    url;
+
+                try {
+                    gmailWindow.focus();
+                } catch (error) {
+                    console.log(error);
+                }
+
+                return;
+
+            }
+
+
+            // ----------------------------------------------
+            // Create Gmail window
+            // ----------------------------------------------
+
+            gmailWindow = window.open(
+                url,
+                "NovaGmailWindow"
+            );
+
+
+            if (gmailWindow) {
+
+                try {
+                    gmailWindow.focus();
+                } catch (error) {
+                    console.log(error);
+                }
+
+            } else {
+
+                status.textContent =
+                    "PLEASE ALLOW POPUPS FOR NOVA AI";
+
+            }
+
+        }
+
+
+        // ==================================================
+        // OPEN AGENT RESULT
+        // ==================================================
+
+        function openAgentResult(url) {
+
+            if (!url) {
+                return;
+            }
+
+
+            const isGmail =
+                url.includes(
+                    "mail.google.com"
+                );
+
+
+            // ----------------------------------------------
+            // Gmail → Reuse same window
+            // ----------------------------------------------
+
+            if (isGmail) {
+
+                openGmail(url);
+
+                return;
+
+            }
+
+
+            // ----------------------------------------------
+            // Other services → New tab
+            // ----------------------------------------------
+
+            const newWindow =
+                window.open(
+                    url,
+                    "_blank"
+                );
+
+
+            if (newWindow) {
+
+                try {
+                    newWindow.focus();
+                } catch (error) {
+                    console.log(error);
+                }
+
+            } else {
+
+                status.textContent =
+                    "PLEASE ALLOW POPUPS";
+
+            }
+
+        }
+
+
+        // ==================================================
+        // SEND COMMAND TO FLASK
+        // ==================================================
+
+        async function sendCommand(
+            cmdText
+        ) {
+
+            try {
+
+                status.textContent =
+                    "CONNECTING TO NOVA CORE...";
+
+
+                transcript.textContent =
+                    cmdText;
+
+
+                console.log(
+                    "Nova command:",
+                    cmdText
+                );
+
+
+                // ------------------------------------------
+                // SEND REQUEST
+                // ------------------------------------------
+
+                const res =
+                    await fetch(
+                        "/agent",
+                        {
+
+                            method: "POST",
+
+                            headers: {
+
+                                "Content-Type":
+                                    "application/json"
+
+                            },
+
+                            body: JSON.stringify({
+
+                                command:
+                                    cmdText
+
+                            })
+
+                        }
+                    );
+
+
+                console.log(
+                    "Agent HTTP status:",
+                    res.status
+                );
+
+
+                // ------------------------------------------
+                // Parse response
+                // ------------------------------------------
+
+                let data;
+
+                try {
+
+                    data =
+                        await res.json();
+
+                } catch (jsonError) {
+
+                    throw new Error(
+                        "Server returned invalid JSON."
+                    );
+
+                }
+
+
+                console.log(
+                    "Agent response:",
+                    data
+                );
+
+
+                // ------------------------------------------
+                // HTTP ERROR
+                // ------------------------------------------
+
+                if (!res.ok) {
+
+                    status.textContent =
+                        data.message ||
+                        `AGENT ERROR ${res.status}`;
+
+                    console.error(
+                        "Backend error:",
+                        data
+                    );
+
+                    return;
+
+                }
+
+
+                // ------------------------------------------
+                // SUCCESS
+                // ------------------------------------------
+
+                if (data.success) {
+
+                    status.textContent =
+                        data.message ||
+                        "COMMAND EXECUTED";
+
+
+                    // --------------------------------------
+                    // Show generated email in console
+                    // --------------------------------------
+
+                    if (
+                        data.email_generated
+                    ) {
+
+                        console.log(
+                            "Generated Email:"
+                        );
+
+                        console.log(
+                            "Subject:",
+                            data.subject
+                        );
+
+                        console.log(
+                            "Body:",
+                            data.body
+                        );
+
+                    }
+
+
+                    // --------------------------------------
+                    // Open result
+                    // --------------------------------------
+
+                    if (data.url) {
+
+                        openAgentResult(
+                            data.url
+                        );
+
+                    }
+
+                } else {
+
+                    status.textContent =
+                        data.message ||
+                        "COMMAND FAILED";
+
+
+                    console.error(
+                        "Nova command failed:",
+                        data
+                    );
+
+                }
+
+            } catch (error) {
+
+                console.error(
+                    "NOVA AGENT ERROR:",
+                    error
+                );
+
+
+                status.textContent =
+                    "AGENT CONNECTION FAILED";
+
+
+                /*
+                 * Show a more useful message
+                 * after a short delay.
+                 */
+
+                setTimeout(() => {
+
+                    status.textContent =
+                        error.message ||
+                        "CHECK BACKEND CONNECTION";
+
+                }, 2500);
+
+            }
+
+        }
+
+
+        // ==================================================
+        // SPEECH RECOGNITION
+        // ==================================================
+
+        const SpeechRecognition =
+            window.SpeechRecognition ||
+            window.webkitSpeechRecognition;
+
+
+        let recognition = null;
+
+
+        if (SpeechRecognition) {
+
+            recognition =
+                new SpeechRecognition();
+
+
+            recognition.continuous =
+                false;
+
+
+            recognition.interimResults =
+                false;
+
+
+            recognition.lang =
+                "en-US";
+
+
+            // ----------------------------------------------
+            // Speech started
+            // ----------------------------------------------
+
+            recognition.onstart =
+                function () {
+
+                    micButton.classList.add(
+                        "listening"
+                    );
+
+                    status.textContent =
+                        "LISTENING... SPEAK NOW";
+
+                    transcript.textContent =
+                        "Listening for your command...";
+
+                };
+
+
+            // ----------------------------------------------
+            // Speech result
+            // ----------------------------------------------
+
+            recognition.onresult =
+                function (event) {
+
+                    const command =
+                        event
+                        .results[0][0]
+                        .transcript
+                        .trim();
+
+
+                    console.log(
+                        "Recognized speech:",
+                        command
+                    );
+
+
+                    transcript.textContent =
+                        command;
+
+
+                    if (command) {
+
+                        sendCommand(
+                            command
+                        );
+
+                    }
+
+                };
+
+
+            // ----------------------------------------------
+            // Speech error
+            // ----------------------------------------------
+
+            recognition.onerror =
+                function (event) {
+
+                    console.error(
+                        "Speech recognition error:",
+                        event.error
+                    );
+
+
+                    micButton.classList.remove(
+                        "listening"
+                    );
+
+
+                    if (
+                        event.error ===
+                        "not-allowed"
+                    ) {
+
+                        status.textContent =
+                            "MICROPHONE PERMISSION DENIED";
+
+                    } else if (
+                        event.error ===
+                        "no-speech"
+                    ) {
+
+                        status.textContent =
+                            "NO SPEECH DETECTED";
+
+                    } else {
+
+                        status.textContent =
+                            "VOICE RECOGNITION ERROR";
+
+                    }
+
+                };
+
+
+            // ----------------------------------------------
+            // Speech ended
+            // ----------------------------------------------
+
+            recognition.onend =
+                function () {
+
+                    micButton.classList.remove(
+                        "listening"
+                    );
+
+
+                    if (
+                        status.textContent.includes(
+                            "LISTENING"
+                        )
+                    ) {
+
+                        status.textContent =
+                            "READY FOR COMMAND";
+
+                    }
+
+                };
 
         } else {
 
-          status.textContent =
-            data.message ||
-            "COMMAND FAILED";
+            status.textContent =
+                "VOICE RECOGNITION NOT SUPPORTED";
 
         }
 
-      } catch (err) {
 
-        console.error(err);
+        // ==================================================
+        // MICROPHONE CLICK
+        // ==================================================
 
-        status.textContent =
-          "AGENT CONNECTION FAILED";
+        micButton.addEventListener(
+            "click",
+            function (event) {
 
-      }
+                /*
+                 * Prevent card dragging
+                 * when clicking microphone.
+                 */
 
-    }
-
-
-    /* =========================================================
-       COMMAND CHIPS
-       ========================================================= */
-
-    document
-      .querySelectorAll(".command-chip")
-      .forEach((chip) => {
-
-        chip.addEventListener(
-          "click",
-          function () {
-
-            const cmd =
-              this.dataset.command;
+                event.stopPropagation();
 
 
-            transcript.textContent =
-              cmd;
+                if (!recognition) {
 
+                    status.textContent =
+                        "BROWSER DOES NOT SUPPORT VOICE";
 
-            /*
-               Do NOT create:
+                    return;
 
-                   window.open("", "_blank")
-
-               here.
-
-               sendCommand() will decide whether the
-               result is Gmail or another service.
-            */
-
-            sendCommand(cmd);
-
-          }
-        );
-
-      });
-
-
-    /* =========================================================
-       REAR CAMERA BACKGROUND
-       ========================================================= */
-
-    (async function startCamera() {
-
-      try {
-
-        if (
-          !navigator.mediaDevices?.getUserMedia
-        ) {
-          return;
-        }
-
-
-        const stream =
-          await navigator.mediaDevices
-            .getUserMedia({
-
-              video: {
-                facingMode: {
-                  ideal: "environment"
-                },
-
-                width: {
-                  ideal: 1920
-                },
-
-                height: {
-                  ideal: 1080
                 }
-              },
-
-              audio: false
-
-            });
 
 
-        cam.srcObject =
-          stream;
+                try {
 
-      } catch (e) {
+                    recognition.start();
 
-        console.error(e);
+                } catch (error) {
 
-        cam.style.display =
-          "none";
+                    console.log(
+                        "Recognition start:",
+                        error
+                    );
 
-      }
+                }
 
-    })();
-
-
-    /* =========================================================
-       DRAG TO REPOSITION CARD
-       ========================================================= */
-
-    let dragging = false;
-
-    let sx = 0;
-    let sy = 0;
-
-    let sl = 0;
-    let st = 0;
+            }
+        );
 
 
-    function prep() {
+        // ==================================================
+        // COMMAND CHIPS
+        // ==================================================
 
-      const r =
-        card.getBoundingClientRect();
+        document
+            .querySelectorAll(
+                ".command-chip"
+            )
+            .forEach(
+                function (chip) {
 
+                    chip.addEventListener(
+                        "click",
+                        function (event) {
 
-      card.style.position =
-        "fixed";
+                            /*
+                             * Prevent dragging
+                             */
 
-      card.style.left =
-        `${r.left}px`;
-
-      card.style.top =
-        `${r.top}px`;
-
-      card.style.margin =
-        "0";
-
-
-      return r;
-
-    }
+                            event.stopPropagation();
 
 
-    function move(l, t) {
-
-      const r =
-        card.getBoundingClientRect();
+                            const command =
+                                this.dataset.command;
 
 
-      l = Math.max(
-        0,
-        Math.min(
-          l,
-          window.innerWidth - r.width
-        )
-      );
+                            transcript.textContent =
+                                command;
 
 
-      t = Math.max(
-        0,
-        Math.min(
-          t,
-          window.innerHeight - r.height
-        )
-      );
+                            sendCommand(
+                                command
+                            );
+
+                        }
+                    );
+
+                }
+            );
 
 
-      card.style.left =
-        `${l}px`;
+        // ==================================================
+        // CAMERA
+        // ==================================================
 
-      card.style.top =
-        `${t}px`;
+        async function startCamera() {
 
-    }
+            try {
+
+                const stream =
+                    await navigator
+                        .mediaDevices
+                        .getUserMedia({
+
+                            video: {
+                                facingMode:
+                                    "user"
+                            },
+
+                            audio: false
+
+                        });
 
 
-    /* =========================================================
-       MOUSE DRAG
-       ========================================================= */
+                cameraBackground.srcObject =
+                    stream;
 
-    card.addEventListener(
-      "mousedown",
-      (e) => {
+
+            } catch (error) {
+
+                console.warn(
+                    "Camera unavailable:",
+                    error
+                );
+
+                /*
+                 * Camera is optional.
+                 *
+                 * The app continues working
+                 * without camera access.
+                 */
+
+            }
+
+        }
+
 
         if (
-          e.target.closest("button")
+            navigator.mediaDevices &&
+            navigator.mediaDevices.getUserMedia
         ) {
-          return;
+
+            startCamera();
+
         }
 
 
-        const r =
-          prep();
+        // ==================================================
+        // DRAGGABLE VOICE CARD
+        // ==================================================
+
+        let isDragging = false;
+
+        let startX = 0;
+        let startY = 0;
+
+        let cardStartX = 0;
+        let cardStartY = 0;
 
 
-        dragging = true;
+        voiceCard.addEventListener(
+            "pointerdown",
+            function (event) {
 
-        card.classList.add(
-          "dragging"
+                /*
+                 * Don't start dragging from buttons.
+                 */
+
+                if (
+                    event.target.closest(
+                        "button"
+                    )
+                ) {
+
+                    return;
+
+                }
+
+
+                isDragging = true;
+
+
+                voiceCard.classList.add(
+                    "dragging"
+                );
+
+
+                voiceCard.setPointerCapture(
+                    event.pointerId
+                );
+
+
+                const rect =
+                    voiceCard.getBoundingClientRect();
+
+
+                startX =
+                    event.clientX;
+
+                startY =
+                    event.clientY;
+
+
+                cardStartX =
+                    rect.left;
+
+                cardStartY =
+                    rect.top;
+
+
+                /*
+                 * Remove transform so that
+                 * left/top positioning becomes
+                 * easier during dragging.
+                 */
+
+                voiceCard.style.transform =
+                    "none";
+
+                voiceCard.style.left =
+                    `${cardStartX}px`;
+
+                voiceCard.style.top =
+                    `${cardStartY}px`;
+
+            }
         );
 
 
-        sx = e.clientX;
-        sy = e.clientY;
+        // ==================================================
+        // DRAG MOVE
+        // ==================================================
 
-        sl = r.left;
-        st = r.top;
+        voiceCard.addEventListener(
+            "pointermove",
+            function (event) {
+
+                if (!isDragging) {
+                    return;
+                }
 
 
-        e.preventDefault();
+                const deltaX =
+                    event.clientX -
+                    startX;
 
-      }
-    );
+
+                const deltaY =
+                    event.clientY -
+                    startY;
 
 
-    document.addEventListener(
-      "mousemove",
-      (e) => {
+                let newLeft =
+                    cardStartX +
+                    deltaX;
 
-        if (!dragging) {
-          return;
+
+                let newTop =
+                    cardStartY +
+                    deltaY;
+
+
+                // ------------------------------------------
+                // Keep card inside viewport
+                // ------------------------------------------
+
+                const rect =
+                    voiceCard.getBoundingClientRect();
+
+
+                const maxLeft =
+                    window.innerWidth -
+                    rect.width;
+
+
+                const maxTop =
+                    window.innerHeight -
+                    rect.height;
+
+
+                newLeft =
+                    Math.max(
+                        0,
+                        Math.min(
+                            newLeft,
+                            maxLeft
+                        )
+                    );
+
+
+                newTop =
+                    Math.max(
+                        0,
+                        Math.min(
+                            newTop,
+                            maxTop
+                        )
+                    );
+
+
+                voiceCard.style.left =
+                    `${newLeft}px`;
+
+
+                voiceCard.style.top =
+                    `${newTop}px`;
+
+            }
+        );
+
+
+        // ==================================================
+        // DRAG END
+        // ==================================================
+
+        function stopDragging(event) {
+
+            if (!isDragging) {
+                return;
+            }
+
+
+            isDragging = false;
+
+
+            voiceCard.classList.remove(
+                "dragging"
+            );
+
+
+            try {
+
+                voiceCard.releasePointerCapture(
+                    event.pointerId
+                );
+
+            } catch (error) {
+
+                console.log(error);
+
+            }
+
         }
 
 
-        move(
-          sl + e.clientX - sx,
-          st + e.clientY - sy
-        );
-
-      }
-    );
-
-
-    document.addEventListener(
-      "mouseup",
-      () => {
-
-        dragging = false;
-
-        card.classList.remove(
-          "dragging"
-        );
-
-      }
-    );
-
-
-    /* =========================================================
-       TOUCH DRAG
-       ========================================================= */
-
-    card.addEventListener(
-      "touchstart",
-      (e) => {
-
-        if (
-          e.target.closest("button")
-        ) {
-          return;
-        }
-
-
-        const t =
-          e.touches[0];
-
-        const r =
-          prep();
-
-
-        dragging = true;
-
-        card.classList.add(
-          "dragging"
+        voiceCard.addEventListener(
+            "pointerup",
+            stopDragging
         );
 
 
-        sx = t.clientX;
-        sy = t.clientY;
-
-        sl = r.left;
-        st = r.top;
-
-
-        e.preventDefault();
-
-      },
-      {
-        passive: false
-      }
-    );
-
-
-    document.addEventListener(
-      "touchmove",
-      (e) => {
-
-        if (!dragging) {
-          return;
-        }
-
-
-        const t =
-          e.touches[0];
-
-
-        move(
-          sl + t.clientX - sx,
-          st + t.clientY - sy
+        voiceCard.addEventListener(
+            "pointercancel",
+            stopDragging
         );
 
 
-        e.preventDefault();
+        // ==================================================
+        // WINDOW RESIZE
+        // ==================================================
 
-      },
-      {
-        passive: false
-      }
-    );
+        window.addEventListener(
+            "resize",
+            function () {
+
+                const rect =
+                    voiceCard.getBoundingClientRect();
 
 
-    document.addEventListener(
-      "touchend",
-      () => {
+                let left =
+                    rect.left;
 
-        dragging = false;
 
-        card.classList.remove(
-          "dragging"
+                let top =
+                    rect.top;
+
+
+                const maxLeft =
+                    window.innerWidth -
+                    rect.width;
+
+
+                const maxTop =
+                    window.innerHeight -
+                    rect.height;
+
+
+                left =
+                    Math.max(
+                        0,
+                        Math.min(
+                            left,
+                            maxLeft
+                        )
+                    );
+
+
+                top =
+                    Math.max(
+                        0,
+                        Math.min(
+                            top,
+                            maxTop
+                        )
+                    );
+
+
+                voiceCard.style.left =
+                    `${left}px`;
+
+
+                voiceCard.style.top =
+                    `${top}px`;
+
+
+                voiceCard.style.transform =
+                    "none";
+
+            }
         );
 
-      }
-    );
 
+        // ==================================================
+        // INITIAL STATUS
+        // ==================================================
 
-    /* =========================================================
-       STOP CAMERA WHEN PAGE CLOSES
-       ========================================================= */
+        console.log(
+            "Nova AI frontend initialized."
+        );
 
-    window.addEventListener(
-      "beforeunload",
-      () => {
+        console.log(
+            "Backend endpoint:",
+            "/agent"
+        );
 
-        cam.srcObject
-          ?.getTracks()
-          .forEach(
-            (tr) => tr.stop()
-          );
-
-      }
-    );
-
-  </script>
+    </script>
 
 </body>
 
