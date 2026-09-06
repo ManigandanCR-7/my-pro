@@ -1,6 +1,9 @@
+
 import os
 import re
 import json
+import time
+import random
 import urllib.parse
 import urllib.request
 import urllib.error
@@ -9,298 +12,267 @@ from flask import Flask, request, jsonify, render_template
 from flask_cors import CORS
 
 
-# ============================================================
-# FLASK APP
-# ============================================================
+# =========================================================
+# FLASK APPLICATION
+# =========================================================
 
 app = Flask(__name__)
+
 CORS(app)
 
 
-# ============================================================
-# RENDER ENVIRONMENT VARIABLES
-# ============================================================
+# =========================================================
+# ENVIRONMENT VARIABLES
+# =========================================================
 
-GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY", "")
+GEMINI_API_KEY = os.environ.get(
+    "GEMINI_API_KEY",
+    ""
+)
 
-CLIENT_EMAIL = os.environ.get("CLIENT_EMAIL", "")
+CLIENT_EMAIL = os.environ.get(
+    "CLIENT_EMAIL",
+    ""
+)
 
 GEMINI_MODEL = os.environ.get(
     "GEMINI_MODEL",
-    "gemini-3.6-flash"
+    "gemini-3.5-flash"
 )
 
-PORT = int(os.environ.get("PORT", 8000))
+PORT = int(
+    os.environ.get(
+        "PORT",
+        8000
+    )
+)
 
 
-# ============================================================
-# HOME
-# ============================================================
+# =========================================================
+# BASIC ROUTES
+# =========================================================
 
 @app.route("/")
 def home():
-    return render_template("index.html")
 
+    return render_template(
+        "index.html"
+    )
 
-# ============================================================
-# HEALTH CHECK
-# ============================================================
 
 @app.route("/health")
 def health():
 
     return jsonify({
-        "status": "online",
-        "service": "Nova AI",
-        "gemini_configured": bool(GEMINI_API_KEY),
-        "model": GEMINI_MODEL
+        "success": True,
+        "message": "Nova AI backend is running."
     })
 
 
-# ============================================================
+# =========================================================
 # EMAIL COMMAND DETECTION
-# ============================================================
+# =========================================================
 
 def is_email_command(command):
 
     command_lower = command.lower()
 
-    email_words = [
+    email_keywords = [
         "gmail",
         "email",
         "e-mail",
-        "mail"
+        "mail",
+        "write an email",
+        "send an email",
+        "draft an email",
+        "compose an email"
     ]
 
-    action_words = [
-        "write",
-        "draft",
-        "compose",
-        "create",
-        "generate",
-        "prepare",
-        "send"
-    ]
-
-    has_email_word = any(
-        word in command_lower
-        for word in email_words
-    )
-
-    has_action_word = any(
-        word in command_lower
-        for word in action_words
-    )
-
-    # Examples:
-    #
-    # "write an email"
-    # "compose email"
-    # "draft a mail"
-    # "send an email"
-    #
-    return (
-        has_email_word and has_action_word
-    ) or any(
-        phrase in command_lower
-        for phrase in [
-            "business proposal",
-            "proposal email",
-            "write an email",
-            "draft an email",
-            "compose an email",
-            "create an email",
-            "generate an email",
-            "write email",
-            "draft email",
-            "compose email"
-        ]
+    return any(
+        keyword in command_lower
+        for keyword in email_keywords
     )
 
 
-# ============================================================
-# EXTRACT EMAIL ADDRESS
-# ============================================================
+# =========================================================
+# EMAIL ADDRESS EXTRACTION
+# =========================================================
 
 def extract_email(command):
 
-    # --------------------------------------------------------
+    # -----------------------------------------------------
     # Normal email
-    # --------------------------------------------------------
+    # Example:
+    # john@gmail.com
+    # -----------------------------------------------------
 
-    match = re.search(
+    normal_email = re.search(
         r'[\w\.-]+@[\w\.-]+\.\w+',
         command
     )
 
-    if match:
-        return match.group(0)
+    if normal_email:
 
-    # --------------------------------------------------------
-    # Voice email
+        return normal_email.group(0)
+
+
+    # -----------------------------------------------------
+    # Voice-style email
     #
+    # Example:
     # john at gmail dot com
-    # --------------------------------------------------------
+    # -----------------------------------------------------
 
-    voice_command = command.lower()
-
-    voice_command = voice_command.replace(
-        " at ",
-        "@"
+    voice_email = re.search(
+        r'([\w\.-]+)\s+at\s+([\w\.-]+)\s+dot\s+(\w+)',
+        command,
+        re.IGNORECASE
     )
 
-    voice_command = voice_command.replace(
-        " dot ",
-        "."
-    )
+    if voice_email:
 
-    voice_command = voice_command.replace(
-        " underscore ",
-        "_"
-    )
+        username = voice_email.group(1)
+        domain = voice_email.group(2)
+        extension = voice_email.group(3)
 
-    voice_command = voice_command.replace(
-        " dash ",
-        "-"
-    )
+        return (
+            f"{username}@"
+            f"{domain}."
+            f"{extension}"
+        )
 
-    match = re.search(
-        r'[\w\.-]+@[\w\.-]+\.\w+',
-        voice_command
-    )
 
-    if match:
-        return match.group(0)
+    # -----------------------------------------------------
+    # If user says "my client"
+    #
+    # Use CLIENT_EMAIL from Render environment variable.
+    # -----------------------------------------------------
 
-    # --------------------------------------------------------
-    # CLIENT EMAIL
-    # --------------------------------------------------------
+    if CLIENT_EMAIL:
 
-    if any(
-        phrase in command.lower()
-        for phrase in [
+        client_phrases = [
             "my client",
             "the client",
-            "client email",
-            "send to my client"
+            "to client",
+            "for my client"
         ]
-    ):
 
-        if CLIENT_EMAIL:
+        command_lower = command.lower()
+
+        if any(
+            phrase in command_lower
+            for phrase in client_phrases
+        ):
+
             return CLIENT_EMAIL
+
 
     return ""
 
 
-# ============================================================
-# GEMINI EMAIL GENERATOR
-# ============================================================
+# =========================================================
+# GEMINI EMAIL GENERATION
+# =========================================================
 
 def generate_email_with_gemini(command):
 
     if not GEMINI_API_KEY:
 
         raise Exception(
-            "GEMINI_API_KEY is not configured in Render."
+            "GEMINI_API_KEY is missing in Render."
         )
 
-    prompt = f"""
-You are Nova AI, an intelligent professional email assistant.
 
-The user gave this voice command:
+    # -----------------------------------------------------
+    # PROMPT
+    # -----------------------------------------------------
+
+    prompt = f"""
+You are Nova AI, a professional email writing assistant.
+
+The user gave this voice instruction:
 
 "{command}"
 
-Your task is to UNDERSTAND what the user wants and then WRITE
-the actual email.
+Your job is to understand the instruction and WRITE
+THE ACTUAL EMAIL.
 
 IMPORTANT:
 
-The user's command is an instruction.
+Do NOT copy the user's voice command into the email.
 
-DO NOT copy the user's command into the email.
+Do NOT explain what you are doing.
 
-DO NOT simply repeat the user's words.
+Do NOT describe the instruction.
 
-Instead, transform the request into a natural,
-professional email.
+Generate the actual email that the user wants.
 
-For example:
+Example:
 
-User:
-"Write an email to my client explaining our new business
-proposal and ask them to review it."
+User instruction:
 
-You should generate something like:
+"Write an email to my client saying our business
+proposal is ready and ask them to review it."
 
-Subject:
-Business Proposal for Your Review
+Generate:
 
-Body:
+SUBJECT: Business Proposal for Your Review
+
+BODY:
 Dear Client,
 
 I hope you are doing well.
 
-I am writing to share our new business proposal for your
-review. The proposal outlines the key aspects of the
-opportunity and how we can work together effectively.
+I am writing to share our business proposal for your review.
+Please take some time to go through the proposal and let me
+know your thoughts.
 
-Please take some time to review the proposal and let me know
-your thoughts. I would be happy to discuss any questions or
-suggestions you may have.
+I would be happy to discuss any questions or suggestions
+you may have.
 
 Best regards,
 [Your Name]
 
-Another example:
-
-User:
-"Write an email to my client saying the project is ready
-and ask them to review it."
-
-Generate a proper professional email saying that the project
-is ready and requesting their review.
 
 RULES:
 
 1. Understand the user's intention.
-2. Generate the actual email.
-3. Never copy the user's command as the email body.
-4. Never explain what you are doing.
-5. Do not mention that you are an AI.
-6. Do not invent specific facts.
-7. Do not invent prices.
-8. Do not invent dates.
-9. Do not invent company names.
-10. Do not invent recipient names.
-11. Use a professional and natural tone.
-12. Use paragraphs where appropriate.
-13. Include an appropriate greeting.
-14. Include a professional closing.
-15. If the user asks for a business proposal email,
-    make it persuasive but professional.
-16. If the user asks to request something,
-    clearly make that request in the email.
-17. If the user asks to inform someone about something,
-    clearly communicate that information.
+2. Write the actual email.
+3. Never copy the voice command as the email body.
+4. Do not invent names.
+5. Do not invent prices.
+6. Do not invent dates.
+7. Do not invent company information.
+8. Do not invent attachments.
+9. Use a professional and natural tone.
+10. Include a greeting.
+11. Include a suitable closing.
+12. Keep the email concise.
+13. Use paragraphs where appropriate.
 
-Return ONLY:
+Return ONLY this format:
 
-SUBJECT: <subject>
+SUBJECT: <email subject>
 
 BODY:
-<actual generated email>
+<actual email body>
 """
 
-    # ========================================================
+
+    # -----------------------------------------------------
     # GEMINI API URL
-    # ========================================================
+    # -----------------------------------------------------
 
     url = (
         "https://generativelanguage.googleapis.com/"
         "v1beta/models/"
         f"{GEMINI_MODEL}:generateContent"
     )
+
+
+    # -----------------------------------------------------
+    # REQUEST PAYLOAD
+    # -----------------------------------------------------
 
     payload = {
 
@@ -322,299 +294,465 @@ BODY:
 
             "temperature": 0.7,
 
-            "maxOutputTokens": 1200
+            "maxOutputTokens": 800
 
         }
 
     }
 
+
     request_data = json.dumps(
         payload
     ).encode("utf-8")
 
-    req = urllib.request.Request(
 
-        url,
+    # -----------------------------------------------------
+    # RETRY CONFIGURATION
+    # -----------------------------------------------------
 
-        data=request_data,
+    max_retries = 4
 
-        headers={
-            "Content-Type": "application/json",
-            "x-goog-api-key": GEMINI_API_KEY
-        },
 
-        method="POST"
-    )
+    # -----------------------------------------------------
+    # GEMINI REQUEST
+    # -----------------------------------------------------
 
-    # ========================================================
-    # CALL GEMINI
-    # ========================================================
-
-    try:
-
-        with urllib.request.urlopen(
-            req,
-            timeout=30
-        ) as response:
-
-            response_data = response.read().decode(
-                "utf-8"
-            )
-
-            result = json.loads(
-                response_data
-            )
-
-    except urllib.error.HTTPError as e:
-
-        error_body = e.read().decode(
-            "utf-8",
-            errors="ignore"
-        )
-
-        print("================================")
-        print("GEMINI HTTP ERROR")
-        print(error_body)
-        print("================================")
-
-        raise Exception(
-            f"Gemini API error: {e.code}"
-        )
-
-    except Exception as e:
-
-        print("Gemini connection error:", e)
-
-        raise Exception(
-            "Unable to connect to Gemini API."
-        )
-
-    # ========================================================
-    # EXTRACT RESPONSE
-    # ========================================================
-
-    try:
-
-        generated_text = (
-            result
-            ["candidates"][0]
-            ["content"]
-            ["parts"][0]
-            ["text"]
-        )
-
-    except (
-        KeyError,
-        IndexError,
-        TypeError
+    for attempt in range(
+        max_retries
     ):
 
-        print("Unexpected Gemini response:")
-        print(result)
+        try:
 
-        raise Exception(
-            "Gemini returned an invalid response."
-        )
-
-    generated_text = generated_text.strip()
-
-    print("================================")
-    print("GEMINI GENERATED EMAIL")
-    print("================================")
-    print(generated_text)
-    print("================================")
-
-    # ========================================================
-    # EXTRACT SUBJECT
-    # ========================================================
-
-    subject_match = re.search(
-        r"SUBJECT\s*:\s*(.+?)(?=\n|$)",
-        generated_text,
-        re.IGNORECASE
-    )
-
-    if subject_match:
-
-        subject = (
-            subject_match
-            .group(1)
-            .strip()
-        )
-
-    else:
-
-        subject = "Professional Message"
-
-    # ========================================================
-    # EXTRACT BODY
-    # ========================================================
-
-    body_match = re.search(
-        r"BODY\s*:\s*(.*)",
-        generated_text,
-        re.IGNORECASE | re.DOTALL
-    )
-
-    if body_match:
-
-        body = (
-            body_match
-            .group(1)
-            .strip()
-        )
-
-    else:
-
-        body = generated_text
-
-    # ========================================================
-    # REMOVE MARKDOWN CODE BLOCKS
-    # ========================================================
-
-    body = re.sub(
-        r"^```(?:text|email)?",
-        "",
-        body,
-        flags=re.IGNORECASE
-    )
-
-    body = re.sub(
-        r"```$",
-        "",
-        body
-    )
-
-    body = body.strip()
-
-    return {
-        "subject": subject,
-        "body": body
-    }
+            print(
+                f"Gemini request "
+                f"attempt {attempt + 1}/"
+                f"{max_retries}"
+            )
 
 
-# ============================================================
-# GMAIL URL
-# ============================================================
+            req = urllib.request.Request(
 
-def create_gmail_url(
-    recipient="",
-    subject="",
-    body=""
-):
+                url,
 
-    base_url = (
-        "https://mail.google.com/mail/u/0/"
-        "?view=cm&fs=1"
-    )
+                data=request_data,
 
-    params = {
+                headers={
 
-        "to": recipient,
+                    "Content-Type":
+                        "application/json",
 
-        "su": subject,
+                    "x-goog-api-key":
+                        GEMINI_API_KEY
 
-        "body": body
+                },
 
-    }
+                method="POST"
 
-    encoded_params = urllib.parse.urlencode(
-        params,
-        quote_via=urllib.parse.quote
-    )
-
-    return (
-        base_url
-        + "&"
-        + encoded_params
-    )
+            )
 
 
-# ============================================================
-# YOUTUBE
-# ============================================================
+            with urllib.request.urlopen(
+                req,
+                timeout=30
+            ) as response:
+
+                response_data = (
+                    response
+                    .read()
+                    .decode("utf-8")
+                )
+
+
+                result = json.loads(
+                    response_data
+                )
+
+
+            # -------------------------------------------------
+            # EXTRACT GEMINI TEXT
+            # -------------------------------------------------
+
+            generated_text = (
+                result
+                ["candidates"]
+                [0]
+                ["content"]
+                ["parts"]
+                [0]
+                ["text"]
+            )
+
+
+            generated_text = (
+                generated_text
+                .strip()
+            )
+
+
+            print(
+                "================================"
+            )
+
+            print(
+                "GEMINI RESPONSE"
+            )
+
+            print(
+                "================================"
+            )
+
+            print(
+                generated_text
+            )
+
+            print(
+                "================================"
+            )
+
+
+            # -------------------------------------------------
+            # EXTRACT SUBJECT
+            # -------------------------------------------------
+
+            subject_match = re.search(
+
+                r"SUBJECT\s*:\s*(.+?)(?=\n|$)",
+
+                generated_text,
+
+                re.IGNORECASE
+
+            )
+
+
+            if subject_match:
+
+                subject = (
+                    subject_match
+                    .group(1)
+                    .strip()
+                )
+
+            else:
+
+                subject = (
+                    "Professional Message"
+                )
+
+
+            # -------------------------------------------------
+            # EXTRACT BODY
+            # -------------------------------------------------
+
+            body_match = re.search(
+
+                r"BODY\s*:\s*(.*)",
+
+                generated_text,
+
+                re.IGNORECASE |
+                re.DOTALL
+
+            )
+
+
+            if body_match:
+
+                body = (
+                    body_match
+                    .group(1)
+                    .strip()
+                )
+
+            else:
+
+                body = generated_text
+
+
+            # -------------------------------------------------
+            # CLEAN MARKDOWN CODE BLOCKS
+            # -------------------------------------------------
+
+            body = re.sub(
+
+                r"^```(?:text|email)?",
+
+                "",
+
+                body,
+
+                flags=re.IGNORECASE
+
+            )
+
+
+            body = re.sub(
+
+                r"```$",
+
+                "",
+
+                body
+
+            )
+
+
+            body = body.strip()
+
+
+            # -------------------------------------------------
+            # RETURN EMAIL
+            # -------------------------------------------------
+
+            return {
+
+                "subject":
+                    subject,
+
+                "body":
+                    body
+
+            }
+
+
+        # =====================================================
+        # HTTP ERRORS
+        # =====================================================
+
+        except urllib.error.HTTPError as e:
+
+            error_body = (
+                e.read()
+                .decode(
+                    "utf-8",
+                    errors="ignore"
+                )
+            )
+
+
+            print(
+                "================================"
+            )
+
+            print(
+                "GEMINI HTTP ERROR"
+            )
+
+            print(
+                "STATUS:",
+                e.code
+            )
+
+            print(
+                "RESPONSE:",
+                error_body
+            )
+
+            print(
+                "================================"
+            )
+
+
+            # -------------------------------------------------
+            # RATE LIMIT / QUOTA
+            # -------------------------------------------------
+
+            if e.code == 429:
+
+                if attempt < max_retries - 1:
+
+                    wait_time = (
+                        (2 ** attempt)
+                        +
+                        random.uniform(
+                            0,
+                            1
+                        )
+                    )
+
+
+                    print(
+                        "Gemini rate limit reached."
+                    )
+
+
+                    print(
+                        f"Waiting "
+                        f"{wait_time:.2f}s..."
+                    )
+
+
+                    time.sleep(
+                        wait_time
+                    )
+
+
+                    continue
+
+
+                raise Exception(
+
+                    "Gemini API rate limit "
+                    "or quota has been exceeded. "
+                    "Please check your Gemini "
+                    "API quota and billing."
+
+                )
+
+
+            # -------------------------------------------------
+            # OTHER GEMINI ERROR
+            # -------------------------------------------------
+
+            try:
+
+                error_json = json.loads(
+                    error_body
+                )
+
+
+                error_message = (
+
+                    error_json
+                    .get("error", {})
+                    .get(
+                        "message",
+                        "Unknown Gemini API error."
+                    )
+
+                )
+
+            except Exception:
+
+                error_message = (
+                    error_body
+                    or
+                    "Unknown Gemini API error."
+                )
+
+
+            raise Exception(
+
+                f"Gemini API error "
+                f"{e.code}: "
+                f"{error_message}"
+
+            )
+
+
+        # =====================================================
+        # GENERAL ERROR
+        # =====================================================
+
+        except Exception as e:
+
+            print(
+                "Gemini request error:",
+                str(e)
+            )
+
+            raise
+
+
+# =========================================================
+# YOUTUBE SEARCH
+# =========================================================
 
 def get_youtube_video(command):
 
-    try:
+    command_lower = command.lower()
 
-        query = re.sub(
-            r"\b(open|play|search|show|find|watch)\b",
-            "",
-            command,
-            flags=re.IGNORECASE
-        )
+    query = command
 
-        query = re.sub(
-            r"\byoutube\b",
-            "",
-            query,
-            flags=re.IGNORECASE
-        )
+    patterns = [
 
-        query = query.strip()
+        r"play\s+(.+)",
+        r"search\s+youtube\s+for\s+(.+)",
+        r"open\s+youtube\s+and\s+play\s+(.+)",
+        r"youtube\s+(.+)"
 
-        if not query:
-            return None
+    ]
 
-        encoded_query = urllib.parse.quote_plus(
-            query
-        )
 
-        search_url = (
-            "https://www.youtube.com/results?"
-            "search_query="
-            + encoded_query
-        )
-
-        req = urllib.request.Request(
-
-            search_url,
-
-            headers={
-                "User-Agent":
-                    "Mozilla/5.0 "
-                    "(Windows NT 10.0; Win64; x64) "
-                    "AppleWebKit/537.36 "
-                    "(KHTML, like Gecko) "
-                    "Chrome/120 Safari/537.36"
-            }
-        )
-
-        with urllib.request.urlopen(
-            req,
-            timeout=10
-        ) as response:
-
-            html = response.read().decode(
-                "utf-8",
-                errors="ignore"
-            )
+    for pattern in patterns:
 
         match = re.search(
-            r'"videoId":"([a-zA-Z0-9_-]{11})"',
-            html
+            pattern,
+            command_lower
         )
 
         if match:
 
-            return match.group(1)
+            query = match.group(1)
 
-        return None
+            break
 
-    except Exception as e:
 
-        print(
-            "YouTube error:",
-            e
+    query = query.strip()
+
+
+    youtube_url = (
+        "https://www.youtube.com/results?search_query="
+        +
+        urllib.parse.quote(query)
+    )
+
+
+    return youtube_url
+
+
+# =========================================================
+# GOOGLE SEARCH
+# =========================================================
+
+def get_google_search_url(command):
+
+    command_lower = command.lower()
+
+    query = command
+
+
+    patterns = [
+
+        r"search google for\s+(.+)",
+
+        r"google search\s+(.+)",
+
+        r"search for\s+(.+)"
+
+    ]
+
+
+    for pattern in patterns:
+
+        match = re.search(
+            pattern,
+            command_lower
         )
 
-        return None
+        if match:
+
+            query = match.group(1)
+
+            break
 
 
-# ============================================================
-# AGENT
-# ============================================================
+    query = query.strip()
+
+
+    google_url = (
+        "https://www.google.com/search?q="
+        +
+        urllib.parse.quote(query)
+    )
+
+
+    return google_url
+
+
+# =========================================================
+# MAIN AGENT
+# =========================================================
 
 @app.route(
     "/agent",
@@ -626,21 +764,26 @@ def agent():
 
         data = request.get_json(
             silent=True
-        ) or {}
-
-        command = (
-
-            data.get("command")
-
-            or data.get("text_command")
-
-            or data.get("text")
-
-            or ""
-
         )
 
-        command = command.strip()
+
+        if not data:
+
+            return jsonify({
+
+                "success": False,
+
+                "message":
+                    "No JSON request received."
+
+            }), 400
+
+
+        command = data.get(
+            "command",
+            ""
+        )
+
 
         if not command:
 
@@ -653,205 +796,228 @@ def agent():
 
             }), 400
 
-        print("\n================================")
-        print("NOVA AI COMMAND")
-        print("================================")
-        print(command)
-        print("================================")
 
-        command_lower = command.lower()
+        command = command.strip()
 
-        # ====================================================
-        # GMAIL + GEMINI
-        # ====================================================
 
-        if is_email_command(command):
+        print(
+            "================================"
+        )
+
+        print(
+            "NOVA COMMAND"
+        )
+
+        print(
+            command
+        )
+
+        print(
+            "================================"
+        )
+
+
+        # =====================================================
+        # EMAIL
+        # =====================================================
+
+        if is_email_command(
+            command
+        ):
 
             print(
-                "Email request detected."
+                "Email command detected."
             )
+
 
             recipient = extract_email(
                 command
             )
 
+
+            # -------------------------------------------------
+            # GENERATE EMAIL WITH GEMINI
+            # -------------------------------------------------
+
+            email_data = (
+                generate_email_with_gemini(
+                    command
+                )
+            )
+
+
+            subject = email_data[
+                "subject"
+            ]
+
+
+            body = email_data[
+                "body"
+            ]
+
+
+            print(
+                "================================"
+            )
+
+            print(
+                "EMAIL GENERATED"
+            )
+
             print(
                 "Recipient:",
-                recipient or "Not specified"
+                recipient
             )
 
-            # ------------------------------------------------
-            # GENERATE ACTUAL EMAIL
-            # ------------------------------------------------
-
-            email = generate_email_with_gemini(
-                command
+            print(
+                "Subject:",
+                subject
             )
 
-            subject = email["subject"]
-
-            body = email["body"]
-
-            # ------------------------------------------------
-            # CREATE GMAIL COMPOSE URL
-            # ------------------------------------------------
-
-            gmail_url = create_gmail_url(
-
-                recipient=recipient,
-
-                subject=subject,
-
-                body=body
-
+            print(
+                "Body:"
             )
+
+            print(
+                body
+            )
+
+            print(
+                "================================"
+            )
+
+
+            # -------------------------------------------------
+            # IMPORTANT
+            #
+            # DO NOT OPEN GMAIL HERE.
+            #
+            # Frontend receives the email,
+            # displays it in the editor,
+            # and user confirms it.
+            # -------------------------------------------------
 
             return jsonify({
 
                 "success": True,
 
-                "service": "gmail",
+                "type": "email",
 
                 "email_generated": True,
 
-                "recipient": recipient,
+                "recipient":
+                    recipient,
 
-                "subject": subject,
+                "subject":
+                    subject,
 
-                "body": body,
+                "body":
+                    body,
 
                 "message":
-                    "Professional email generated successfully.",
-
-                "url": gmail_url
+                    "Email generated successfully. Review and edit before opening Gmail."
 
             })
 
-        # ====================================================
+
+        # =====================================================
         # YOUTUBE
-        # ====================================================
-
-        if "youtube" in command_lower:
-
-            video_id = get_youtube_video(
-                command
-            )
-
-            if video_id:
-
-                youtube_url = (
-                    "https://www.youtube.com/watch?v="
-                    + video_id
-                )
-
-                return jsonify({
-
-                    "success": True,
-
-                    "service": "youtube",
-
-                    "message":
-                        "Opening YouTube.",
-
-                    "url":
-                        youtube_url
-
-                })
-
-            search_query = re.sub(
-                r"\byoutube\b",
-                "",
-                command,
-                flags=re.IGNORECASE
-            ).strip()
-
-            youtube_url = (
-                "https://www.youtube.com/results?"
-                + urllib.parse.urlencode({
-
-                    "search_query":
-                        search_query
-
-                })
-            )
-
-            return jsonify({
-
-                "success": True,
-
-                "service": "youtube",
-
-                "message":
-                    "Opening YouTube search.",
-
-                "url":
-                    youtube_url
-
-            })
-
-        # ====================================================
-        # GOOGLE
-        # ====================================================
+        # =====================================================
 
         if (
-            "google" in command_lower
-            or "search for" in command_lower
-            or command_lower.startswith("search ")
+            "youtube" in
+            command.lower()
         ):
 
-            query = re.sub(
-                r"\b(open|google|search|for)\b",
-                "",
-                command,
-                flags=re.IGNORECASE
-            ).strip()
-
-            google_url = (
-                "https://www.google.com/search?"
-                + urllib.parse.urlencode({
-
-                    "q": query
-
-                })
+            youtube_url = (
+                get_youtube_video(
+                    command
+                )
             )
+
 
             return jsonify({
 
                 "success": True,
 
-                "service": "google",
-
-                "message":
-                    "Opening Google search.",
+                "type": "youtube",
 
                 "url":
-                    google_url
+                    youtube_url,
+
+                "message":
+                    "Opening YouTube..."
 
             })
 
-        # ====================================================
-        # UNKNOWN
-        # ====================================================
+
+        # =====================================================
+        # GOOGLE SEARCH
+        # =====================================================
+
+        if (
+            "google" in
+            command.lower()
+        ):
+
+            google_url = (
+                get_google_search_url(
+                    command
+                )
+            )
+
+
+            return jsonify({
+
+                "success": True,
+
+                "type": "google",
+
+                "url":
+                    google_url,
+
+                "message":
+                    "Opening Google..."
+
+            })
+
+
+        # =====================================================
+        # UNKNOWN COMMAND
+        # =====================================================
 
         return jsonify({
 
             "success": False,
 
             "message":
-                "Nova AI could not understand the command.",
+                "Nova AI could not understand that command."
 
-            "command":
-                command
+        })
 
-        }), 400
+
+    # =========================================================
+    # AGENT ERROR
+    # =========================================================
 
     except Exception as e:
 
-        print("\n================================")
-        print("NOVA AI ERROR")
-        print("================================")
-        print(str(e))
-        print("================================")
+        print(
+            "================================"
+        )
+
+        print(
+            "NOVA AGENT ERROR"
+        )
+
+        print(
+            str(e)
+        )
+
+        print(
+            "================================"
+        )
+
 
         return jsonify({
 
@@ -863,19 +1029,27 @@ def agent():
         }), 500
 
 
-# ============================================================
-# RUN
-# ============================================================
+# =========================================================
+# APPLICATION START
+# =========================================================
 
 if __name__ == "__main__":
 
-    print("========================================")
-    print("        NOVA AI AGENT SERVER")
-    print("========================================")
+    print(
+        "================================"
+    )
 
     print(
-        "Gemini configured:",
-        bool(GEMINI_API_KEY)
+        "NOVA AI BACKEND"
+    )
+
+    print(
+        "Starting Flask server..."
+    )
+
+    print(
+        "Port:",
+        PORT
     )
 
     print(
@@ -884,19 +1058,17 @@ if __name__ == "__main__":
     )
 
     print(
-        "Client email configured:",
-        bool(CLIENT_EMAIL)
+        "================================"
     )
 
-    print(
-        "Port:",
-        PORT
-    )
-
-    print("========================================")
 
     app.run(
+
         host="0.0.0.0",
+
         port=PORT,
+
         debug=False
+
     )
+
