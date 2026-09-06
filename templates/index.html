@@ -1,586 +1,750 @@
+```html
 <!DOCTYPE html>
 <html lang="en">
 
 <head>
-
     <meta charset="UTF-8">
-
-    <meta
-        name="viewport"
-        content="width=device-width, initial-scale=1.0"
-    >
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
     <title>Nova AI // Next-Gen Voice Agent</title>
 
-    <!-- Google Fonts -->
-    <link
-        rel="preconnect"
-        href="https://fonts.googleapis.com"
-    >
-
-    <link
-        rel="preconnect"
-        href="https://fonts.gstatic.com"
-        crossorigin
-    >
-
+    <!-- Google Font -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link
         href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
         rel="stylesheet"
     >
 
-    <!-- Tailwind -->
-    <script src="https://cdn.tailwindcss.com"></script>
-
     <style>
-
         * {
             box-sizing: border-box;
+            margin: 0;
+            padding: 0;
         }
 
         html,
         body {
             width: 100%;
             height: 100%;
-            margin: 0;
             overflow: hidden;
             font-family: "Inter", sans-serif;
-            background: #050505;
+            background: #020617;
             color: white;
         }
 
-        /* ==========================================
+        /* =========================================
            CAMERA BACKGROUND
-        ========================================== */
+        ========================================= */
 
         #cameraBackground {
-
             position: fixed;
-
             inset: 0;
-
             width: 100%;
             height: 100%;
-
             object-fit: cover;
-
-            z-index: 0;
-
-            filter:
-                brightness(0.32)
-                contrast(1.1)
-                saturate(0.8);
-
+            z-index: -3;
+            background: #020617;
+            transform: scaleX(-1);
         }
 
-        /* ==========================================
-           BACKGROUND OVERLAY
-        ========================================== */
-
-        .background-overlay {
-
+        .camera-overlay {
             position: fixed;
-
             inset: 0;
-
-            z-index: 1;
-
+            z-index: -2;
             background:
-                radial-gradient(
-                    circle at center,
-                    rgba(0, 0, 0, 0.05),
-                    rgba(0, 0, 0, 0.75)
+                linear-gradient(
+                    rgba(2, 6, 23, 0.72),
+                    rgba(2, 6, 23, 0.82)
                 );
+            pointer-events: none;
+        }
 
+        .background-grid {
+            position: fixed;
+            inset: 0;
+            z-index: -1;
             pointer-events: none;
 
+            background-image:
+                linear-gradient(
+                    rgba(255,255,255,0.025) 1px,
+                    transparent 1px
+                ),
+                linear-gradient(
+                    90deg,
+                    rgba(255,255,255,0.025) 1px,
+                    transparent 1px
+                );
+
+            background-size: 40px 40px;
         }
 
-        /* ==========================================
-           MAIN APP
-        ========================================== */
+        /* =========================================
+           MAIN CONTAINER
+        ========================================= */
 
-        .app {
-
-            position: relative;
-
-            z-index: 5;
-
+        .page {
             width: 100%;
-            height: 100vh;
-
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
         }
 
-        /* ==========================================
-           HEADER
-        ========================================== */
+        /* =========================================
+           NOVA CARD
+        ========================================= */
 
-        .topbar {
-
+        .nova-card {
             position: absolute;
 
-            top: 25px;
-            left: 30px;
-            right: 30px;
+            width: min(620px, calc(100vw - 30px));
+            max-height: calc(100vh - 30px);
 
-            display: flex;
+            overflow-y: auto;
 
-            justify-content: space-between;
+            padding: 30px;
 
-            align-items: center;
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            border-radius: 28px;
 
-            z-index: 20;
+            background:
+                linear-gradient(
+                    145deg,
+                    rgba(15, 23, 42, 0.78),
+                    rgba(2, 6, 23, 0.70)
+                );
 
-        }
-
-        .logo {
-
-            display: flex;
-
-            align-items: center;
-
-            gap: 12px;
-
-            font-weight: 800;
-
-            letter-spacing: 0.08em;
-
-            font-size: 16px;
-
-        }
-
-        .logo-dot {
-
-            width: 10px;
-            height: 10px;
-
-            border-radius: 50%;
-
-            background: white;
+            backdrop-filter: blur(25px);
+            -webkit-backdrop-filter: blur(25px);
 
             box-shadow:
-                0 0 15px rgba(255,255,255,0.9);
+                0 30px 80px rgba(0, 0, 0, 0.55),
+                inset 0 1px 0 rgba(255,255,255,0.06);
 
+            user-select: none;
+
+            cursor: grab;
+
+            transition:
+                box-shadow 0.25s ease,
+                border-color 0.25s ease;
         }
 
-        .online {
+        .nova-card:active {
+            cursor: grabbing;
+        }
+
+        .nova-card:hover {
+            border-color: rgba(255,255,255,0.20);
+
+            box-shadow:
+                0 35px 90px rgba(0, 0, 0, 0.65),
+                inset 0 1px 0 rgba(255,255,255,0.08);
+        }
+
+        .nova-card::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .nova-card::-webkit-scrollbar-thumb {
+            background: rgba(255,255,255,0.15);
+            border-radius: 20px;
+        }
+
+        /* =========================================
+           HEADER
+        ========================================= */
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 28px;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .nova-logo {
+            width: 44px;
+            height: 44px;
 
             display: flex;
-
             align-items: center;
+            justify-content: center;
 
-            gap: 8px;
+            border-radius: 14px;
 
-            font-size: 11px;
+            background:
+                linear-gradient(
+                    135deg,
+                    #ffffff,
+                    #94a3b8
+                );
 
-            color: rgba(255,255,255,0.65);
+            color: #020617;
 
-            letter-spacing: 0.12em;
+            font-weight: 800;
+            font-size: 18px;
 
+            box-shadow:
+                0 8px 25px rgba(255,255,255,0.15);
         }
 
-        .online-dot {
+        .brand-text h1 {
+            font-size: 17px;
+            font-weight: 800;
+            letter-spacing: -0.4px;
+        }
 
+        .brand-text p {
+            margin-top: 3px;
+
+            color: #94a3b8;
+
+            font-size: 11px;
+            font-weight: 600;
+
+            letter-spacing: 1.4px;
+            text-transform: uppercase;
+        }
+
+        .status-pill {
+            display: flex;
+            align-items: center;
+            gap: 7px;
+
+            padding: 8px 11px;
+
+            border: 1px solid rgba(255,255,255,0.10);
+            border-radius: 999px;
+
+            background: rgba(255,255,255,0.04);
+
+            color: #cbd5e1;
+
+            font-size: 10px;
+            font-weight: 700;
+
+            letter-spacing: 1px;
+        }
+
+        .status-dot {
             width: 7px;
             height: 7px;
 
             border-radius: 50%;
 
-            background: #55ff8a;
+            background: #22c55e;
 
             box-shadow:
-                0 0 12px rgba(85,255,138,0.9);
-
+                0 0 12px rgba(34,197,94,0.8);
         }
 
-        /* ==========================================
-           MAIN CARD
-        ========================================== */
+        /* =========================================
+           MIC SECTION
+        ========================================= */
 
-        #voiceCard {
-
-            position: absolute;
-
-            left: 50%;
-            top: 50%;
-
-            transform:
-                translate(-50%, -50%);
-
-            width: min(460px, 90vw);
-
-            padding: 34px;
-
-            border-radius: 28px;
-
-            background:
-                rgba(255,255,255,0.075);
-
-            border:
-                1px solid
-                rgba(255,255,255,0.14);
-
-            backdrop-filter:
-                blur(28px);
-
-            -webkit-backdrop-filter:
-                blur(28px);
-
-            box-shadow:
-                0 30px 100px
-                rgba(0,0,0,0.45),
-
-                inset 0 1px 0
-                rgba(255,255,255,0.08);
-
-            cursor: grab;
-
-            user-select: none;
-
-        }
-
-        #voiceCard.dragging {
-
-            cursor: grabbing;
-
-            transition: none;
-
-        }
-
-        /* ==========================================
-           CARD HEADER
-        ========================================== */
-
-        .card-header {
-
-            text-align: center;
-
-            margin-bottom: 28px;
-
-        }
-
-        .card-title {
-
-            font-size: 30px;
-
-            font-weight: 800;
-
-            letter-spacing: -0.04em;
-
-        }
-
-        .card-subtitle {
-
-            margin-top: 8px;
-
-            font-size: 12px;
-
-            color:
-                rgba(255,255,255,0.48);
-
-            letter-spacing:
-                0.13em;
-
-            text-transform:
-                uppercase;
-
-        }
-
-        /* ==========================================
-           MICROPHONE
-        ========================================== */
-
-        .mic-area {
-
+        .mic-section {
             display: flex;
-
-            justify-content: center;
-
+            flex-direction: column;
             align-items: center;
 
-            margin: 15px 0 25px;
-
+            margin-bottom: 25px;
         }
 
-        #micButton {
+        .mic-button {
+            width: 120px;
+            height: 120px;
 
-            width: 125px;
-            height: 125px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
 
+            border: 1px solid rgba(255,255,255,0.16);
             border-radius: 50%;
 
-            border: 1px solid
-                rgba(255,255,255,0.25);
-
             background:
-                rgba(255,255,255,0.08);
+                radial-gradient(
+                    circle at 30% 25%,
+                    rgba(255,255,255,0.16),
+                    rgba(255,255,255,0.035)
+                );
 
-            display: flex;
+            color: white;
 
-            justify-content: center;
-
-            align-items: center;
+            font-size: 42px;
 
             cursor: pointer;
 
+            box-shadow:
+                0 20px 60px rgba(0,0,0,0.45),
+                inset 0 1px 0 rgba(255,255,255,0.10);
+
             transition:
-                transform 0.2s ease,
-                background 0.2s ease,
-                box-shadow 0.2s ease;
+                transform 0.25s ease,
+                box-shadow 0.25s ease;
+        }
+
+        .mic-button:hover {
+            transform: scale(1.05);
 
             box-shadow:
-                0 0 0 rgba(255,255,255,0);
-
+                0 25px 70px rgba(0,0,0,0.55),
+                0 0 35px rgba(255,255,255,0.08);
         }
 
-        #micButton:hover {
-
-            transform:
-                scale(1.05);
-
-            background:
-                rgba(255,255,255,0.14);
-
-        }
-
-        #micButton.listening {
-
-            animation:
-                micPulse 1.4s infinite;
-
+        .mic-button.listening {
+            animation: micPulse 1.2s infinite;
         }
 
         @keyframes micPulse {
 
             0% {
+                transform: scale(1);
                 box-shadow:
-                    0 0 0 0
-                    rgba(255,255,255,0.35);
+                    0 0 0 0 rgba(255,255,255,0.18);
             }
 
             70% {
+                transform: scale(1.05);
                 box-shadow:
-                    0 0 0 25px
-                    rgba(255,255,255,0);
+                    0 0 0 24px rgba(255,255,255,0);
             }
 
             100% {
+                transform: scale(1);
                 box-shadow:
-                    0 0 0 0
-                    rgba(255,255,255,0);
+                    0 0 0 0 rgba(255,255,255,0);
             }
-
         }
 
-        .mic-icon {
+        .mic-hint {
+            margin-top: 14px;
 
-            width: 42px;
-            height: 42px;
+            color: #94a3b8;
 
-            fill: white;
+            font-size: 11px;
+            font-weight: 600;
 
+            letter-spacing: 1.2px;
+            text-transform: uppercase;
         }
 
-        /* ==========================================
-           STATUS
-        ========================================== */
-
-        #status {
-
-            text-align: center;
-
-            font-size: 10px;
-
-            letter-spacing:
-                0.14em;
-
-            color:
-                rgba(255,255,255,0.58);
-
-            min-height: 16px;
-
-            margin-bottom: 15px;
-
-        }
-
-        /* ==========================================
+        /* =========================================
            TRANSCRIPT
-        ========================================== */
+        ========================================= */
 
         .transcript-box {
+            margin-bottom: 20px;
 
-            min-height: 75px;
+            padding: 16px 18px;
 
-            padding: 15px;
-
+            border: 1px solid rgba(255,255,255,0.08);
             border-radius: 16px;
 
-            background:
-                rgba(0,0,0,0.18);
-
-            border:
-                1px solid
-                rgba(255,255,255,0.08);
-
+            background: rgba(255,255,255,0.035);
         }
 
-        .transcript-label {
+        .section-label {
+            margin-bottom: 8px;
+
+            color: #64748b;
 
             font-size: 9px;
+            font-weight: 800;
 
-            color:
-                rgba(255,255,255,0.38);
-
-            letter-spacing:
-                0.12em;
-
-            text-transform:
-                uppercase;
-
-            margin-bottom: 7px;
-
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
         }
 
         #transcript {
+            min-height: 20px;
+
+            color: #e2e8f0;
 
             font-size: 13px;
-
-            line-height: 1.5;
-
-            color:
-                rgba(255,255,255,0.82);
+            line-height: 1.6;
 
             word-break: break-word;
-
         }
 
-        /* ==========================================
-           COMMAND CHIPS
-        ========================================== */
+        /* =========================================
+           EMAIL EDITOR
+        ========================================= */
 
-        .commands {
+        .email-editor {
+            display: none;
 
-            margin-top: 18px;
+            margin-top: 20px;
 
-            display: flex;
+            padding: 20px;
 
-            flex-wrap: wrap;
-
-            justify-content: center;
-
-            gap: 8px;
-
-        }
-
-        .command-chip {
-
-            border: 1px solid
-                rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.12);
+            border-radius: 20px;
 
             background:
-                rgba(255,255,255,0.055);
+                rgba(15,23,42,0.70);
 
-            color:
-                rgba(255,255,255,0.68);
+            box-shadow:
+                inset 0 1px 0 rgba(255,255,255,0.05);
+        }
 
-            padding:
-                8px 12px;
+        .email-editor.visible {
+            display: block;
+
+            animation: editorAppear 0.3s ease;
+        }
+
+        @keyframes editorAppear {
+
+            from {
+                opacity: 0;
+                transform: translateY(8px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .email-title {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+
+            margin-bottom: 18px;
+        }
+
+        .email-title-left {
+            display: flex;
+            align-items: center;
+            gap: 9px;
+        }
+
+        .email-icon {
+            width: 32px;
+            height: 32px;
+
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            border-radius: 10px;
+
+            background: rgba(255,255,255,0.08);
+
+            font-size: 15px;
+        }
+
+        .email-title h2 {
+            font-size: 13px;
+            font-weight: 800;
+
+            letter-spacing: 0.3px;
+        }
+
+        .ai-badge {
+            padding: 5px 8px;
 
             border-radius: 999px;
 
-            font-size: 10px;
+            background: rgba(255,255,255,0.06);
+
+            color: #cbd5e1;
+
+            font-size: 8px;
+            font-weight: 800;
+
+            letter-spacing: 1px;
+        }
+
+        .field {
+            margin-bottom: 15px;
+        }
+
+        .field label {
+            display: block;
+
+            margin-bottom: 7px;
+
+            color: #64748b;
+
+            font-size: 9px;
+            font-weight: 800;
+
+            letter-spacing: 1.3px;
+            text-transform: uppercase;
+        }
+
+        .field input,
+        .field textarea {
+            width: 100%;
+
+            border: 1px solid rgba(255,255,255,0.10);
+            border-radius: 12px;
+
+            outline: none;
+
+            background:
+                rgba(2,6,23,0.65);
+
+            color: #f8fafc;
+
+            font-family: "Inter", sans-serif;
+
+            transition:
+                border-color 0.2s ease,
+                background 0.2s ease;
+        }
+
+        .field input {
+            height: 46px;
+            padding: 0 14px;
+
+            font-size: 13px;
+            font-weight: 500;
+        }
+
+        .field textarea {
+            min-height: 190px;
+
+            padding: 14px;
+
+            resize: vertical;
+
+            font-size: 13px;
+            line-height: 1.65;
+
+            user-select: text;
+        }
+
+        .field input:focus,
+        .field textarea:focus {
+            border-color: rgba(255,255,255,0.25);
+
+            background:
+                rgba(2,6,23,0.82);
+        }
+
+        /* =========================================
+           EMAIL ACTIONS
+        ========================================= */
+
+        .email-actions {
+            display: flex;
+            gap: 10px;
+
+            margin-top: 18px;
+        }
+
+        .gmail-button,
+        .regenerate-button {
+            height: 46px;
+
+            border-radius: 12px;
+
+            font-family: "Inter", sans-serif;
+            font-weight: 800;
 
             cursor: pointer;
 
             transition:
-                all 0.2s ease;
-
+                transform 0.2s ease,
+                background 0.2s ease;
         }
 
-        .command-chip:hover {
+        .gmail-button {
+            flex: 1;
+
+            border: 1px solid rgba(255,255,255,0.15);
 
             background:
-                rgba(255,255,255,0.12);
+                rgba(255,255,255,0.95);
 
-            color: white;
+            color: #020617;
 
-            transform:
-                translateY(-2px);
-
+            font-size: 12px;
+            letter-spacing: 0.3px;
         }
 
-        /* ==========================================
-           FOOTER
-        ========================================== */
+        .gmail-button:hover {
+            transform: translateY(-1px);
 
-        .footer {
+            background: white;
+        }
 
-            position: absolute;
+        .regenerate-button {
+            padding: 0 15px;
 
-            bottom: 22px;
+            border: 1px solid rgba(255,255,255,0.10);
 
-            left: 0;
-            right: 0;
+            background: rgba(255,255,255,0.05);
+
+            color: #cbd5e1;
+
+            font-size: 11px;
+        }
+
+        .regenerate-button:hover {
+            background: rgba(255,255,255,0.09);
+        }
+
+        .enter-hint {
+            margin-top: 11px;
 
             text-align: center;
 
-            z-index: 20;
+            color: #64748b;
 
             font-size: 9px;
+            font-weight: 600;
 
-            color:
-                rgba(255,255,255,0.3);
-
-            letter-spacing:
-                0.12em;
-
+            letter-spacing: 0.5px;
         }
 
-        /* ==========================================
+        .enter-key {
+            display: inline-block;
+
+            padding: 2px 6px;
+
+            margin: 0 3px;
+
+            border: 1px solid rgba(255,255,255,0.12);
+            border-radius: 5px;
+
+            background: rgba(255,255,255,0.05);
+
+            color: #94a3b8;
+
+            font-size: 8px;
+        }
+
+        /* =========================================
+           COMMAND CHIPS
+        ========================================= */
+
+        .commands {
+            margin-top: 20px;
+        }
+
+        .commands-title {
+            margin-bottom: 10px;
+
+            color: #64748b;
+
+            font-size: 9px;
+            font-weight: 800;
+
+            letter-spacing: 1.4px;
+            text-transform: uppercase;
+        }
+
+        .command-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .command-chip {
+            padding: 9px 11px;
+
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 10px;
+
+            background: rgba(255,255,255,0.035);
+
+            color: #94a3b8;
+
+            font-size: 10px;
+            font-weight: 600;
+
+            cursor: pointer;
+
+            transition:
+                background 0.2s ease,
+                color 0.2s ease,
+                transform 0.2s ease;
+        }
+
+        .command-chip:hover {
+            background: rgba(255,255,255,0.08);
+
+            color: #f8fafc;
+
+            transform: translateY(-1px);
+        }
+
+        /* =========================================
+           FOOTER STATUS
+        ========================================= */
+
+        .footer-status {
+            margin-top: 20px;
+
+            padding-top: 15px;
+
+            border-top: 1px solid rgba(255,255,255,0.06);
+
+            text-align: center;
+
+            color: #64748b;
+
+            font-size: 9px;
+            font-weight: 700;
+
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        /* =========================================
            MOBILE
-        ========================================== */
+        ========================================= */
 
         @media (max-width: 600px) {
 
-            .topbar {
+            .nova-card {
+                padding: 22px;
 
-                top: 18px;
-                left: 18px;
-                right: 18px;
-
+                border-radius: 22px;
             }
 
-            #voiceCard {
-
-                padding: 25px;
-
-                width: 92vw;
-
+            .header {
+                margin-bottom: 22px;
             }
 
-            .card-title {
+            .mic-button {
+                width: 100px;
+                height: 100px;
 
-                font-size: 25px;
-
+                font-size: 34px;
             }
 
-            #micButton {
-
-                width: 105px;
-                height: 105px;
-
+            .status-pill {
+                display: none;
             }
 
+            .email-actions {
+                flex-direction: column;
+            }
+
+            .regenerate-button {
+                width: 100%;
+            }
         }
-
     </style>
-
 </head>
-
 
 <body>
 
-    <!-- ==========================================
+    <!-- =========================================
          CAMERA
     ========================================== -->
 
@@ -591,215 +755,303 @@
         playsinline
     ></video>
 
-
-    <div class="background-overlay"></div>
-
-
-    <!-- ==========================================
-         APP
-    ========================================== -->
-
-    <main class="app">
+    <div class="camera-overlay"></div>
+    <div class="background-grid"></div>
 
 
-        <!-- ======================================
-             TOP BAR
-        ======================================= -->
+    <main class="page">
 
-        <header class="topbar">
+        <!-- =====================================
+             NOVA CARD
+        ====================================== -->
 
-            <div class="logo">
+        <section
+            class="nova-card"
+            id="novaCard"
+        >
 
-                <span class="logo-dot"></span>
+            <!-- HEADER -->
 
-                NOVA AI
+            <header class="header">
 
-            </div>
+                <div class="brand">
 
+                    <div class="nova-logo">
+                        N
+                    </div>
 
-            <div class="online">
+                    <div class="brand-text">
 
-                <span class="online-dot"></span>
+                        <h1>Nova AI</h1>
 
-                CORE ONLINE
+                        <p>
+                            Next-Gen Voice Agent
+                        </p>
 
-            </div>
+                    </div>
 
-        </header>
-
-
-        <!-- ======================================
-             VOICE CARD
-        ======================================= -->
-
-        <section id="voiceCard">
-
-
-            <div class="card-header">
-
-                <div class="card-title">
-                    Nova Voice Agent
                 </div>
 
-                <div class="card-subtitle">
-                    Speak. Command. Execute.
+                <div class="status-pill">
+
+                    <span class="status-dot"></span>
+
+                    <span id="status">
+                        READY
+                    </span>
+
                 </div>
 
-            </div>
+            </header>
 
 
-            <!-- ==================================
+            <!-- =================================
                  MICROPHONE
-            =================================== -->
+            ================================== -->
 
-            <div class="mic-area">
+            <div class="mic-section">
 
                 <button
+                    class="mic-button"
                     id="micButton"
                     type="button"
-                    aria-label="Start voice recognition"
+                    aria-label="Start voice command"
                 >
-
-                    <svg
-                        class="mic-icon"
-                        viewBox="0 0 24 24"
-                    >
-
-                        <path
-                            d="M12 14a3 3 0 0 0 3-3V6a3 3 0 0 0-6 0v5a3 3 0 0 0 3 3Z"
-                        />
-
-                        <path
-                            d="M17.3 11a5.3 5.3 0 0 1-10.6 0H5a7 7 0 0 0 6 6.92V21H8v2h8v-2h-3v-3.08A7 7 0 0 0 19 11h-1.7Z"
-                        />
-
-                    </svg>
-
+                    🎙️
                 </button>
 
+                <div class="mic-hint">
+                    Tap & speak
+                </div>
+
             </div>
 
 
-            <!-- ==================================
-                 STATUS
-            =================================== -->
-
-            <div id="status">
-                READY FOR COMMAND
-            </div>
-
-
-            <!-- ==================================
-                 TRANSCRIPT
-            =================================== -->
+            <!-- =================================
+                 VOICE TRANSCRIPT
+            ================================== -->
 
             <div class="transcript-box">
 
-                <div class="transcript-label">
+                <div class="section-label">
                     Voice Command
                 </div>
 
                 <div id="transcript">
                     Say something like:
-                    "Open Gmail and write an email..."
+                    "Open Gmail and write an email to my client..."
                 </div>
 
             </div>
 
 
-            <!-- ==================================
-                 QUICK COMMANDS
-            =================================== -->
+            <!-- =================================
+                 EMAIL EDITOR
+            ================================== -->
+
+            <section
+                class="email-editor"
+                id="emailEditor"
+            >
+
+                <div class="email-title">
+
+                    <div class="email-title-left">
+
+                        <div class="email-icon">
+                            ✉
+                        </div>
+
+                        <h2>
+                            AI EMAIL PREVIEW
+                        </h2>
+
+                    </div>
+
+                    <div class="ai-badge">
+                        AI GENERATED
+                    </div>
+
+                </div>
+
+
+                <!-- SUBJECT -->
+
+                <div class="field">
+
+                    <label for="emailSubject">
+                        Subject
+                    </label>
+
+                    <input
+                        type="text"
+                        id="emailSubject"
+                        placeholder="Email subject"
+                        autocomplete="off"
+                    >
+
+                </div>
+
+
+                <!-- BODY -->
+
+                <div class="field">
+
+                    <label for="emailBody">
+                        Email Body
+                    </label>
+
+                    <textarea
+                        id="emailBody"
+                        placeholder="Your generated email will appear here..."
+                    ></textarea>
+
+                </div>
+
+
+                <!-- ACTIONS -->
+
+                <div class="email-actions">
+
+                    <button
+                        class="gmail-button"
+                        id="openGmailButton"
+                        type="button"
+                    >
+                        Open in Gmail →
+                    </button>
+
+                    <button
+                        class="regenerate-button"
+                        id="regenerateButton"
+                        type="button"
+                    >
+                        ↻ Regenerate
+                    </button>
+
+                </div>
+
+                <div class="enter-hint">
+
+                    Press
+
+                    <span class="enter-key">
+                        ENTER
+                    </span>
+
+                    to open Gmail
+
+                </div>
+
+            </section>
+
+
+            <!-- =================================
+                 COMMANDS
+            ================================== -->
 
             <div class="commands">
 
-                <button
-                    class="command-chip"
-                    data-command="Open YouTube and play a relaxing music video"
-                >
-                    ▶ YouTube
-                </button>
+                <div class="commands-title">
+                    Quick Commands
+                </div>
 
+                <div class="command-list">
 
-                <button
-                    class="command-chip"
-                    data-command="Open Gmail and write an email to my client about our new business proposal"
-                >
-                    ✉ Gmail
-                </button>
+                    <button
+                        class="command-chip"
+                        data-command="Open YouTube and play a relaxing music video"
+                    >
+                        ▶ YouTube
+                    </button>
 
+                    <button
+                        class="command-chip"
+                        data-command="Open Gmail and write an email to my client about our new business proposal"
+                    >
+                        ✉ Gmail
+                    </button>
 
-                <button
-                    class="command-chip"
-                    data-command="Search Google for latest artificial intelligence news"
-                >
-                    🔎 Google
-                </button>
+                    <button
+                        class="command-chip"
+                        data-command="Search Google for latest artificial intelligence news"
+                    >
+                        🔎 Google
+                    </button>
+
+                </div>
 
             </div>
 
 
+            <!-- FOOTER -->
+
+            <div class="footer-status">
+                Nova Core • Voice Controlled • AI Powered
+            </div>
+
         </section>
-
-
-        <!-- ======================================
-             FOOTER
-        ======================================= -->
-
-        <footer class="footer">
-
-            NOVA AI // NEXT-GEN VOICE AGENT
-
-        </footer>
-
 
     </main>
 
 
     <script>
 
-        // ==================================================
-        // ELEMENTS
-        // ==================================================
+        /* =========================================
+           ELEMENTS
+        ========================================= */
 
-        const micButton =
-            document.getElementById("micButton");
+        const novaCard = document.getElementById("novaCard");
 
-        const status =
-            document.getElementById("status");
+        const micButton = document.getElementById("micButton");
 
         const transcript =
             document.getElementById("transcript");
 
-        const voiceCard =
-            document.getElementById("voiceCard");
+        const status =
+            document.getElementById("status");
+
+        const emailEditor =
+            document.getElementById("emailEditor");
+
+        const emailSubject =
+            document.getElementById("emailSubject");
+
+        const emailBody =
+            document.getElementById("emailBody");
+
+        const openGmailButton =
+            document.getElementById("openGmailButton");
+
+        const regenerateButton =
+            document.getElementById("regenerateButton");
 
         const cameraBackground =
-            document.getElementById(
-                "cameraBackground"
-            );
+            document.getElementById("cameraBackground");
 
 
-        // ==================================================
-        // GMAIL WINDOW
-        // ==================================================
-
-        /*
-         * IMPORTANT:
-         *
-         * We keep ONE Gmail window.
-         *
-         * Every new Gmail command will reuse
-         * the same browser window instead of
-         * opening another tab.
-         */
+        /* =========================================
+           GLOBAL STATE
+        ========================================= */
 
         let gmailWindow = null;
 
+        let lastEmailCommand = "";
 
-        // ==================================================
-        // OPEN GMAIL
-        // ==================================================
+        let recognition = null;
+
+        let isDragging = false;
+
+        let dragOffsetX = 0;
+
+        let dragOffsetY = 0;
+
+
+        /* =========================================
+           GMAIL WINDOW
+           
+           Only ONE Gmail window is maintained.
+        ========================================= */
 
         function openGmail(url) {
 
@@ -807,18 +1059,12 @@
                 return;
             }
 
-
-            // ----------------------------------------------
-            // Existing Gmail window
-            // ----------------------------------------------
-
             if (
                 gmailWindow &&
                 !gmailWindow.closed
             ) {
 
-                gmailWindow.location.href =
-                    url;
+                gmailWindow.location.href = url;
 
                 try {
                     gmailWindow.focus();
@@ -827,18 +1073,14 @@
                 }
 
                 return;
-
             }
 
 
-            // ----------------------------------------------
-            // Create Gmail window
-            // ----------------------------------------------
-
-            gmailWindow = window.open(
-                url,
-                "NovaGmailWindow"
-            );
+            gmailWindow =
+                window.open(
+                    url,
+                    "NovaGmailWindow"
+                );
 
 
             if (gmailWindow) {
@@ -852,75 +1094,137 @@
             } else {
 
                 status.textContent =
-                    "PLEASE ALLOW POPUPS FOR NOVA AI";
+                    "ALLOW POPUPS FOR NOVA AI";
 
             }
 
         }
 
 
-        // ==================================================
-        // OPEN AGENT RESULT
-        // ==================================================
+        /* =========================================
+           CREATE GMAIL COMPOSE URL
+           
+           This uses the edited values from
+           the frontend.
+        ========================================= */
 
-        function openAgentResult(url) {
+        function createGmailUrl(subject, body) {
 
-            if (!url) {
-                return;
-            }
+            const baseUrl =
+                "https://mail.google.com/mail/u/0/?view=cm&fs=1";
 
+            const params = new URLSearchParams();
 
-            const isGmail =
-                url.includes(
-                    "mail.google.com"
-                );
+            params.set(
+                "su",
+                subject || ""
+            );
 
+            params.set(
+                "body",
+                body || ""
+            );
 
-            // ----------------------------------------------
-            // Gmail → Reuse same window
-            // ----------------------------------------------
+            return (
+                baseUrl +
+                "&" +
+                params.toString()
+            );
 
-            if (isGmail) {
-
-                openGmail(url);
-
-                return;
-
-            }
-
-
-            // ----------------------------------------------
-            // Other services → New tab
-            // ----------------------------------------------
-
-            const newWindow =
-                window.open(
-                    url,
-                    "_blank"
-                );
+        }
 
 
-            if (newWindow) {
+        /* =========================================
+           OPEN CURRENT EMAIL IN GMAIL
+        ========================================= */
 
-                try {
-                    newWindow.focus();
-                } catch (error) {
-                    console.log(error);
-                }
+        function openCurrentEmailInGmail() {
 
-            } else {
+            const subject =
+                emailSubject.value.trim();
+
+            const body =
+                emailBody.value.trim();
+
+
+            if (!body) {
 
                 status.textContent =
-                    "PLEASE ALLOW POPUPS";
+                    "EMAIL BODY IS EMPTY";
+
+                emailBody.focus();
+
+                return;
 
             }
+
+
+            const gmailUrl =
+                createGmailUrl(
+                    subject,
+                    body
+                );
+
+
+            status.textContent =
+                "OPENING GMAIL...";
+
+
+            openGmail(gmailUrl);
 
         }
 
 
-        // ==================================================
-        // SEND COMMAND TO FLASK
-        // ==================================================
+        /* =========================================
+           SHOW GENERATED EMAIL
+           
+           Backend should return:
+           
+           {
+               success: true,
+               type: "email",
+               subject: "...",
+               body: "..."
+           }
+        ========================================= */
+
+        function showEmailEditor(data) {
+
+            emailSubject.value =
+                data.subject || "";
+
+            emailBody.value =
+                data.body || "";
+
+
+            emailEditor.classList.add(
+                "visible"
+            );
+
+
+            status.textContent =
+                "EMAIL READY TO REVIEW";
+
+
+            /*
+             * Do NOT open Gmail here.
+             *
+             * User must review/edit first.
+             */
+
+
+            setTimeout(() => {
+
+                emailBody.focus();
+
+            }, 100);
+
+        }
+
+
+        /* =========================================
+           SEND COMMAND TO FLASK BACKEND
+        ========================================= */
 
         async function sendCommand(
             cmdText
@@ -942,51 +1246,36 @@
                 );
 
 
-                // ------------------------------------------
-                // SEND REQUEST
-                // ------------------------------------------
-
-                const res =
+                const response =
                     await fetch(
                         "/agent",
                         {
-
                             method: "POST",
 
                             headers: {
-
                                 "Content-Type":
                                     "application/json"
-
                             },
 
                             body: JSON.stringify({
-
-                                command:
-                                    cmdText
-
+                                command: cmdText
                             })
-
                         }
                     );
 
 
                 console.log(
                     "Agent HTTP status:",
-                    res.status
+                    response.status
                 );
 
-
-                // ------------------------------------------
-                // Parse response
-                // ------------------------------------------
 
                 let data;
 
                 try {
 
                     data =
-                        await res.json();
+                        await response.json();
 
                 } catch (jsonError) {
 
@@ -1003,87 +1292,105 @@
                 );
 
 
-                // ------------------------------------------
-                // HTTP ERROR
-                // ------------------------------------------
-
-                if (!res.ok) {
+                if (!response.ok) {
 
                     status.textContent =
                         data.message ||
-                        `AGENT ERROR ${res.status}`;
-
-                    console.error(
-                        "Backend error:",
-                        data
-                    );
+                        `AGENT ERROR ${response.status}`;
 
                     return;
 
                 }
 
 
-                // ------------------------------------------
-                // SUCCESS
-                // ------------------------------------------
-
-                if (data.success) {
-
-                    status.textContent =
-                        data.message ||
-                        "COMMAND EXECUTED";
-
-
-                    // --------------------------------------
-                    // Show generated email in console
-                    // --------------------------------------
-
-                    if (
-                        data.email_generated
-                    ) {
-
-                        console.log(
-                            "Generated Email:"
-                        );
-
-                        console.log(
-                            "Subject:",
-                            data.subject
-                        );
-
-                        console.log(
-                            "Body:",
-                            data.body
-                        );
-
-                    }
-
-
-                    // --------------------------------------
-                    // Open result
-                    // --------------------------------------
-
-                    if (data.url) {
-
-                        openAgentResult(
-                            data.url
-                        );
-
-                    }
-
-                } else {
+                if (!data.success) {
 
                     status.textContent =
                         data.message ||
                         "COMMAND FAILED";
 
-
-                    console.error(
-                        "Nova command failed:",
-                        data
-                    );
+                    return;
 
                 }
+
+
+                /* =================================
+                   EMAIL RESPONSE
+                ================================= */
+
+                if (
+                    data.type === "email" ||
+                    data.email_generated === true
+                ) {
+
+                    lastEmailCommand =
+                        cmdText;
+
+                    showEmailEditor(data);
+
+                    return;
+
+                }
+
+
+                /* =================================
+                   NORMAL URL RESPONSE
+                   
+                   YouTube / Google etc.
+                ================================= */
+
+                if (data.url) {
+
+                    const isGmail =
+                        data.url.includes(
+                            "mail.google.com"
+                        );
+
+
+                    if (isGmail) {
+
+                        /*
+                         * Normally email commands
+                         * should now return type=email.
+                         *
+                         * This is just a safety fallback.
+                         */
+
+                        openGmail(data.url);
+
+                    } else {
+
+                        const newWindow =
+                            window.open(
+                                data.url,
+                                "_blank"
+                            );
+
+
+                        if (newWindow) {
+
+                            try {
+                                newWindow.focus();
+                            } catch (error) {
+                                console.log(error);
+                            }
+
+                        } else {
+
+                            status.textContent =
+                                "ALLOW POPUPS FOR NOVA AI";
+
+                        }
+
+                    }
+
+                }
+
+
+                status.textContent =
+                    data.message ||
+                    "COMMAND EXECUTED";
+
 
             } catch (error) {
 
@@ -1096,11 +1403,6 @@
                 status.textContent =
                     "AGENT CONNECTION FAILED";
 
-
-                /*
-                 * Show a more useful message
-                 * after a short delay.
-                 */
 
                 setTimeout(() => {
 
@@ -1115,16 +1417,99 @@
         }
 
 
-        // ==================================================
-        // SPEECH RECOGNITION
-        // ==================================================
+        /* =========================================
+           REGENERATE EMAIL
+        ========================================= */
+
+        regenerateButton.addEventListener(
+            "click",
+            async () => {
+
+                if (!lastEmailCommand) {
+
+                    status.textContent =
+                        "NO EMAIL REQUEST FOUND";
+
+                    return;
+
+                }
+
+
+                status.textContent =
+                    "REGENERATING EMAIL...";
+
+
+                emailEditor.classList.remove(
+                    "visible"
+                );
+
+
+                await sendCommand(
+                    lastEmailCommand
+                );
+
+            }
+        );
+
+
+        /* =========================================
+           OPEN GMAIL BUTTON
+        ========================================= */
+
+        openGmailButton.addEventListener(
+            "click",
+            () => {
+
+                openCurrentEmailInGmail();
+
+            }
+        );
+
+
+        /* =========================================
+           ENTER KEY
+           
+           Enter anywhere inside the email editor
+           opens Gmail.
+           
+           Shift + Enter inside textarea
+           creates a new line.
+        ========================================= */
+
+        emailEditor.addEventListener(
+            "keydown",
+            (event) => {
+
+                if (
+                    event.key === "Enter" &&
+                    !event.shiftKey
+                ) {
+
+                    /*
+                     * For textarea:
+                     * Enter normally means newline.
+                     *
+                     * We intentionally use Enter
+                     * as the confirmation action.
+                     */
+
+                    event.preventDefault();
+
+                    openCurrentEmailInGmail();
+
+                }
+
+            }
+        );
+
+
+        /* =========================================
+           SPEECH RECOGNITION
+        ========================================= */
 
         const SpeechRecognition =
             window.SpeechRecognition ||
             window.webkitSpeechRecognition;
-
-
-        let recognition = null;
 
 
         if (SpeechRecognition) {
@@ -1145,44 +1530,32 @@
                 "en-US";
 
 
-            // ----------------------------------------------
-            // Speech started
-            // ----------------------------------------------
-
             recognition.onstart =
-                function () {
+                () => {
 
                     micButton.classList.add(
                         "listening"
                     );
 
-                    status.textContent =
-                        "LISTENING... SPEAK NOW";
 
-                    transcript.textContent =
-                        "Listening for your command...";
+                    micButton.textContent =
+                        "🔴";
+
+
+                    status.textContent =
+                        "LISTENING...";
 
                 };
 
 
-            // ----------------------------------------------
-            // Speech result
-            // ----------------------------------------------
-
             recognition.onresult =
-                function (event) {
+                (event) => {
 
                     const command =
                         event
-                        .results[0][0]
-                        .transcript
-                        .trim();
-
-
-                    console.log(
-                        "Recognized speech:",
-                        command
-                    );
+                            .results[0][0]
+                            .transcript
+                            .trim();
 
 
                     transcript.textContent =
@@ -1200,12 +1573,8 @@
                 };
 
 
-            // ----------------------------------------------
-            // Speech error
-            // ----------------------------------------------
-
             recognition.onerror =
-                function (event) {
+                (event) => {
 
                     console.error(
                         "Speech recognition error:",
@@ -1213,57 +1582,31 @@
                     );
 
 
-                    micButton.classList.remove(
-                        "listening"
-                    );
-
-
-                    if (
-                        event.error ===
-                        "not-allowed"
-                    ) {
-
-                        status.textContent =
-                            "MICROPHONE PERMISSION DENIED";
-
-                    } else if (
-                        event.error ===
-                        "no-speech"
-                    ) {
-
-                        status.textContent =
-                            "NO SPEECH DETECTED";
-
-                    } else {
-
-                        status.textContent =
-                            "VOICE RECOGNITION ERROR";
-
-                    }
+                    status.textContent =
+                        "VOICE INPUT ERROR";
 
                 };
 
 
-            // ----------------------------------------------
-            // Speech ended
-            // ----------------------------------------------
-
             recognition.onend =
-                function () {
+                () => {
 
                     micButton.classList.remove(
                         "listening"
                     );
 
 
+                    micButton.textContent =
+                        "🎙️";
+
+
                     if (
-                        status.textContent.includes(
-                            "LISTENING"
-                        )
+                        status.textContent ===
+                        "LISTENING..."
                     ) {
 
                         status.textContent =
-                            "READY FOR COMMAND";
+                            "READY";
 
                     }
 
@@ -1272,31 +1615,24 @@
         } else {
 
             status.textContent =
-                "VOICE RECOGNITION NOT SUPPORTED";
+                "VOICE NOT SUPPORTED";
 
         }
 
 
-        // ==================================================
-        // MICROPHONE CLICK
-        // ==================================================
+        /* =========================================
+           MICROPHONE BUTTON
+        ========================================= */
 
         micButton.addEventListener(
             "click",
-            function (event) {
-
-                /*
-                 * Prevent card dragging
-                 * when clicking microphone.
-                 */
-
-                event.stopPropagation();
-
+            () => {
 
                 if (!recognition) {
 
-                    status.textContent =
-                        "BROWSER DOES NOT SUPPORT VOICE";
+                    alert(
+                        "Speech recognition is not supported in this browser."
+                    );
 
                     return;
 
@@ -1310,8 +1646,7 @@
                 } catch (error) {
 
                     console.log(
-                        "Recognition start:",
-                        error
+                        "Recognition already running."
                     );
 
                 }
@@ -1320,50 +1655,39 @@
         );
 
 
-        // ==================================================
-        // COMMAND CHIPS
-        // ==================================================
+        /* =========================================
+           QUICK COMMANDS
+        ========================================= */
 
         document
-            .querySelectorAll(
-                ".command-chip"
-            )
-            .forEach(
-                function (chip) {
+            .querySelectorAll(".command-chip")
+            .forEach((chip) => {
 
-                    chip.addEventListener(
-                        "click",
-                        function (event) {
+                chip.addEventListener(
+                    "click",
+                    function () {
 
-                            /*
-                             * Prevent dragging
-                             */
-
-                            event.stopPropagation();
+                        const command =
+                            this.dataset.command;
 
 
-                            const command =
-                                this.dataset.command;
+                        transcript.textContent =
+                            command;
 
 
-                            transcript.textContent =
-                                command;
+                        sendCommand(
+                            command
+                        );
+
+                    }
+                );
+
+            });
 
 
-                            sendCommand(
-                                command
-                            );
-
-                        }
-                    );
-
-                }
-            );
-
-
-        // ==================================================
-        // CAMERA
-        // ==================================================
+        /* =========================================
+           CAMERA
+        ========================================= */
 
         async function startCamera() {
 
@@ -1373,14 +1697,10 @@
                     await navigator
                         .mediaDevices
                         .getUserMedia({
-
                             video: {
-                                facingMode:
-                                    "user"
+                                facingMode: "user"
                             },
-
                             audio: false
-
                         });
 
 
@@ -1395,314 +1715,237 @@
                     error
                 );
 
-                /*
-                 * Camera is optional.
-                 *
-                 * The app continues working
-                 * without camera access.
-                 */
-
             }
 
         }
 
 
-        if (
-            navigator.mediaDevices &&
-            navigator.mediaDevices.getUserMedia
-        ) {
-
-            startCamera();
-
-        }
+        startCamera();
 
 
-        // ==================================================
-        // DRAGGABLE VOICE CARD
-        // ==================================================
+        /* =========================================
+           DRAGGABLE NOVA CARD
+           
+           Pointer Events support:
+           - Mouse
+           - Touch
+           - Pen
+        ========================================= */
 
-        let isDragging = false;
-
-        let startX = 0;
-        let startY = 0;
-
-        let cardStartX = 0;
-        let cardStartY = 0;
-
-
-        voiceCard.addEventListener(
+        novaCard.addEventListener(
             "pointerdown",
-            function (event) {
+            (event) => {
 
                 /*
-                 * Don't start dragging from buttons.
+                 * Don't start dragging when the user
+                 * interacts with form controls/buttons.
                  */
 
-                if (
-                    event.target.closest(
-                        "button"
-                    )
-                ) {
+                const tag =
+                    event.target.tagName.toLowerCase();
 
+
+                const isInteractive =
+                    [
+                        "button",
+                        "input",
+                        "textarea",
+                        "select",
+                        "a"
+                    ].includes(tag);
+
+
+                if (isInteractive) {
                     return;
-
                 }
 
 
                 isDragging = true;
 
 
-                voiceCard.classList.add(
-                    "dragging"
-                );
-
-
-                voiceCard.setPointerCapture(
-                    event.pointerId
-                );
-
-
                 const rect =
-                    voiceCard.getBoundingClientRect();
+                    novaCard.getBoundingClientRect();
 
 
-                startX =
-                    event.clientX;
-
-                startY =
-                    event.clientY;
-
-
-                cardStartX =
+                dragOffsetX =
+                    event.clientX -
                     rect.left;
 
-                cardStartY =
+
+                dragOffsetY =
+                    event.clientY -
                     rect.top;
 
 
-                /*
-                 * Remove transform so that
-                 * left/top positioning becomes
-                 * easier during dragging.
-                 */
-
-                voiceCard.style.transform =
-                    "none";
-
-                voiceCard.style.left =
-                    `${cardStartX}px`;
-
-                voiceCard.style.top =
-                    `${cardStartY}px`;
+                novaCard.setPointerCapture(
+                    event.pointerId
+                );
 
             }
         );
 
 
-        // ==================================================
-        // DRAG MOVE
-        // ==================================================
-
-        voiceCard.addEventListener(
+        novaCard.addEventListener(
             "pointermove",
-            function (event) {
+            (event) => {
 
                 if (!isDragging) {
                     return;
                 }
 
 
-                const deltaX =
+                let x =
                     event.clientX -
-                    startX;
+                    dragOffsetX;
 
 
-                const deltaY =
+                let y =
                     event.clientY -
-                    startY;
+                    dragOffsetY;
 
 
-                let newLeft =
-                    cardStartX +
-                    deltaX;
+                const cardWidth =
+                    novaCard.offsetWidth;
 
 
-                let newTop =
-                    cardStartY +
-                    deltaY;
+                const cardHeight =
+                    novaCard.offsetHeight;
 
 
-                // ------------------------------------------
-                // Keep card inside viewport
-                // ------------------------------------------
-
-                const rect =
-                    voiceCard.getBoundingClientRect();
-
-
-                const maxLeft =
+                const maxX =
                     window.innerWidth -
-                    rect.width;
+                    cardWidth;
 
 
-                const maxTop =
+                const maxY =
                     window.innerHeight -
-                    rect.height;
+                    cardHeight;
 
 
-                newLeft =
+                x =
                     Math.max(
                         0,
                         Math.min(
-                            newLeft,
-                            maxLeft
+                            x,
+                            maxX
                         )
                     );
 
 
-                newTop =
+                y =
                     Math.max(
                         0,
                         Math.min(
-                            newTop,
-                            maxTop
+                            y,
+                            maxY
                         )
                     );
 
 
-                voiceCard.style.left =
-                    `${newLeft}px`;
+                novaCard.style.left =
+                    `${x}px`;
 
 
-                voiceCard.style.top =
-                    `${newTop}px`;
-
-            }
-        );
+                novaCard.style.top =
+                    `${y}px`;
 
 
-        // ==================================================
-        // DRAG END
-        // ==================================================
-
-        function stopDragging(event) {
-
-            if (!isDragging) {
-                return;
-            }
-
-
-            isDragging = false;
-
-
-            voiceCard.classList.remove(
-                "dragging"
-            );
-
-
-            try {
-
-                voiceCard.releasePointerCapture(
-                    event.pointerId
-                );
-
-            } catch (error) {
-
-                console.log(error);
-
-            }
-
-        }
-
-
-        voiceCard.addEventListener(
-            "pointerup",
-            stopDragging
-        );
-
-
-        voiceCard.addEventListener(
-            "pointercancel",
-            stopDragging
-        );
-
-
-        // ==================================================
-        // WINDOW RESIZE
-        // ==================================================
-
-        window.addEventListener(
-            "resize",
-            function () {
-
-                const rect =
-                    voiceCard.getBoundingClientRect();
-
-
-                let left =
-                    rect.left;
-
-
-                let top =
-                    rect.top;
-
-
-                const maxLeft =
-                    window.innerWidth -
-                    rect.width;
-
-
-                const maxTop =
-                    window.innerHeight -
-                    rect.height;
-
-
-                left =
-                    Math.max(
-                        0,
-                        Math.min(
-                            left,
-                            maxLeft
-                        )
-                    );
-
-
-                top =
-                    Math.max(
-                        0,
-                        Math.min(
-                            top,
-                            maxTop
-                        )
-                    );
-
-
-                voiceCard.style.left =
-                    `${left}px`;
-
-
-                voiceCard.style.top =
-                    `${top}px`;
-
-
-                voiceCard.style.transform =
+                novaCard.style.transform =
                     "none";
 
             }
         );
 
 
-        // ==================================================
-        // INITIAL STATUS
-        // ==================================================
+        function stopDragging() {
 
-        console.log(
-            "Nova AI frontend initialized."
+            isDragging = false;
+
+        }
+
+
+        novaCard.addEventListener(
+            "pointerup",
+            stopDragging
         );
 
-        console.log(
-            "Backend endpoint:",
-            "/agent"
+
+        novaCard.addEventListener(
+            "pointercancel",
+            stopDragging
+        );
+
+
+        novaCard.addEventListener(
+            "lostpointercapture",
+            stopDragging
+        );
+
+
+        /* =========================================
+           WINDOW RESIZE
+           
+           Keep card inside viewport.
+        ========================================= */
+
+        window.addEventListener(
+            "resize",
+            () => {
+
+                const rect =
+                    novaCard.getBoundingClientRect();
+
+
+                let x =
+                    rect.left;
+
+
+                let y =
+                    rect.top;
+
+
+                const maxX =
+                    window.innerWidth -
+                    novaCard.offsetWidth;
+
+
+                const maxY =
+                    window.innerHeight -
+                    novaCard.offsetHeight;
+
+
+                x =
+                    Math.max(
+                        0,
+                        Math.min(
+                            x,
+                            maxX
+                        )
+                    );
+
+
+                y =
+                    Math.max(
+                        0,
+                        Math.min(
+                            y,
+                            maxY
+                        )
+                    );
+
+
+                novaCard.style.left =
+                    `${x}px`;
+
+
+                novaCard.style.top =
+                    `${y}px`;
+
+
+                novaCard.style.transform =
+                    "none";
+
+            }
         );
 
     </script>
@@ -1710,3 +1953,4 @@
 </body>
 
 </html>
+```
