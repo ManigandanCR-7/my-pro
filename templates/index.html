@@ -1,10 +1,16 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
   <title>Nova AI // Next-Gen Voice Agent</title>
-  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <link
+    href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
+    rel="stylesheet">
+
   <style>
     :root {
       --bg: #030305;
@@ -15,7 +21,11 @@
       --border: rgba(255, 255, 255, 0.12);
     }
 
-    * { margin: 0; padding: 0; box-sizing: border-box; }
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
 
     body {
       min-height: 100vh;
@@ -32,19 +42,35 @@
 
     /* Camera background */
     #cameraBackground {
-      position: fixed; inset: 0;
-      width: 100%; height: 100%;
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      height: 100%;
       object-fit: cover;
       background: #000;
     }
+
     .camera-overlay {
-      position: fixed; inset: 0;
-      background: linear-gradient(135deg, rgba(0,0,0,.45), rgba(0,0,0,.18), rgba(0,0,0,.5));
+      position: fixed;
+      inset: 0;
+      background: linear-gradient(
+        135deg,
+        rgba(0, 0, 0, .45),
+        rgba(0, 0, 0, .18),
+        rgba(0, 0, 0, .5)
+      );
       pointer-events: none;
     }
+
     .camera-glow {
-      position: fixed; inset: 0;
-      background: radial-gradient(circle at center, transparent 15%, rgba(0,0,0,.25) 70%, rgba(0,0,0,.65) 100%);
+      position: fixed;
+      inset: 0;
+      background: radial-gradient(
+        circle at center,
+        transparent 15%,
+        rgba(0, 0, 0, .25) 70%,
+        rgba(0, 0, 0, .65) 100%
+      );
       pointer-events: none;
     }
 
@@ -57,177 +83,418 @@
       backdrop-filter: blur(22px);
       border: 1px solid var(--border);
       border-radius: 24px;
-      box-shadow: 0 20px 45px rgba(0,0,0,.5), inset 0 1px 0 rgba(255,255,255,.12);
+      box-shadow:
+        0 20px 45px rgba(0, 0, 0, .5),
+        inset 0 1px 0 rgba(255, 255, 255, .12);
       position: relative;
       z-index: 10;
       opacity: 0;
       cursor: grab;
       touch-action: none;
       user-select: none;
-      animation: entrance 1.2s cubic-bezier(.16,1,.3,1) forwards;
+      animation: entrance 1.2s cubic-bezier(.16, 1, .3, 1) forwards;
     }
-    .container.dragging { cursor: grabbing; transition: none; }
+
+    .container.dragging {
+      cursor: grabbing;
+      transition: none;
+    }
 
     @keyframes entrance {
-      from { opacity: 0; transform: translateY(50px) scale(.94); }
-      to   { opacity: 1; transform: translateY(0) scale(1); }
+      from {
+        opacity: 0;
+        transform: translateY(50px) scale(.94);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
     }
 
     /* Header */
-    .header { text-align: center; margin-bottom: 1rem; }
+    .header {
+      text-align: center;
+      margin-bottom: 1rem;
+    }
+
     .status-indicator {
-      display: inline-flex; align-items: center; gap: 7px;
-      padding: 4px 9px; margin-bottom: .5rem;
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      padding: 4px 9px;
+      margin-bottom: .5rem;
       border-radius: 999px;
-      background: rgba(255,255,255,.06);
-      border: 1px solid rgba(255,255,255,.1);
+      background: rgba(255, 255, 255, .06);
+      border: 1px solid rgba(255, 255, 255, .1);
       font-family: "JetBrains Mono", monospace;
       font-size: .58rem;
       color: #d4d4d8;
     }
+
     .status-dot {
-      width: 6px; height: 6px; border-radius: 50%;
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
       background: #22c55e;
       box-shadow: 0 0 10px #22c55e;
       animation: pulse 2s infinite;
     }
-    @keyframes pulse { 50% { opacity: .4; } }
+
+    @keyframes pulse {
+      50% {
+        opacity: .4;
+      }
+    }
 
     .title {
-      font-size: 1.75rem; font-weight: 800; letter-spacing: -.04em;
+      font-size: 1.75rem;
+      font-weight: 800;
+      letter-spacing: -.04em;
       margin-bottom: .35rem;
       background: linear-gradient(135deg, #fff, #c4b5fd);
-      -webkit-background-clip: text; background-clip: text;
+      -webkit-background-clip: text;
+      background-clip: text;
       color: transparent;
     }
-    .subtitle { font-family: "JetBrains Mono", monospace; font-size: .68rem; color: var(--text-muted); }
+
+    .subtitle {
+      font-family: "JetBrains Mono", monospace;
+      font-size: .68rem;
+      color: var(--text-muted);
+    }
 
     /* Mic + rings */
     .visualizer-container {
-      position: relative; width: 125px; height: 125px;
+      position: relative;
+      width: 125px;
+      height: 125px;
       margin: 0 auto 1rem;
-      display: flex; align-items: center; justify-content: center;
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
-    .ring { position: absolute; border-radius: 50%; border: 1px solid rgba(167,139,250,.25); }
-    .ring-1 { width: 100%; height: 100%; animation: rot 12s linear infinite; }
-    .ring-2 { width: 80%; height: 80%; border-color: rgba(124,58,237,.35); animation: rot 9s linear infinite reverse; }
-    @keyframes rot { to { transform: rotate(360deg); } }
+
+    .ring {
+      position: absolute;
+      border-radius: 50%;
+      border: 1px solid rgba(167, 139, 250, .25);
+    }
+
+    .ring-1 {
+      width: 100%;
+      height: 100%;
+      animation: rot 12s linear infinite;
+    }
+
+    .ring-2 {
+      width: 80%;
+      height: 80%;
+      border-color: rgba(124, 58, 237, .35);
+      animation: rot 9s linear infinite reverse;
+    }
+
+    @keyframes rot {
+      to {
+        transform: rotate(360deg);
+      }
+    }
 
     .mic-btn {
-      width: 76px; height: 76px;
-      border-radius: 50%; border: none; cursor: pointer;
-      display: flex; align-items: center; justify-content: center;
-      position: relative; z-index: 5;
-      background: linear-gradient(135deg, var(--primary), var(--secondary));
-      box-shadow: 0 10px 30px rgba(79,70,229,.4);
+      width: 76px;
+      height: 76px;
+      border-radius: 50%;
+      border: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      z-index: 5;
+      background: linear-gradient(
+        135deg,
+        var(--primary),
+        var(--secondary)
+      );
+      box-shadow: 0 10px 30px rgba(79, 70, 229, .4);
       transition: transform .25s, box-shadow .25s;
     }
-    .mic-btn:hover { transform: scale(1.06); }
-    .mic-btn.listening { background: linear-gradient(135deg, #ef4444, #dc2626); animation: micPulse 1.5s infinite; }
-    @keyframes micPulse {
-      0%   { box-shadow: 0 0 0 0 rgba(239,68,68,.55); }
-      70%  { box-shadow: 0 0 0 20px rgba(239,68,68,0); }
-      100% { box-shadow: 0 0 0 0 rgba(239,68,68,0); }
+
+    .mic-btn:hover {
+      transform: scale(1.06);
     }
-    .mic-icon { width: 27px; height: 27px; fill: #fff; }
+
+    .mic-btn.listening {
+      background: linear-gradient(135deg, #ef4444, #dc2626);
+      animation: micPulse 1.5s infinite;
+    }
+
+    @keyframes micPulse {
+      0% {
+        box-shadow: 0 0 0 0 rgba(239, 68, 68, .55);
+      }
+
+      70% {
+        box-shadow: 0 0 0 20px rgba(239, 68, 68, 0);
+      }
+
+      100% {
+        box-shadow: 0 0 0 0 rgba(239, 68, 68, 0);
+      }
+    }
+
+    .mic-icon {
+      width: 27px;
+      height: 27px;
+      fill: #fff;
+    }
 
     /* Status + transcript + wave */
-    .status-box { margin-bottom: .7rem; text-align: center; }
-    #status { font-family: "JetBrains Mono", monospace; font-size: .62rem; color: #d4d4d8; }
+    .status-box {
+      margin-bottom: .7rem;
+      text-align: center;
+    }
+
+    #status {
+      font-family: "JetBrains Mono", monospace;
+      font-size: .62rem;
+      color: #d4d4d8;
+    }
+
     .transcript {
       min-height: 38px;
       padding: .55rem .75rem;
       border-radius: 10px;
-      background: rgba(0,0,0,.25);
-      border: 1px solid rgba(255,255,255,.08);
+      background: rgba(0, 0, 0, .25);
+      border: 1px solid rgba(255, 255, 255, .08);
       font-family: "JetBrains Mono", monospace;
       font-size: .58rem;
       color: #d4d4d8;
       margin-bottom: .7rem;
       text-align: center;
     }
-    .wave { height: 18px; display: flex; align-items: center; justify-content: center; gap: 3px; margin-bottom: .65rem; }
-    .wave span { width: 2px; height: 4px; border-radius: 2px; background: #8b5cf6; transition: height .2s; }
-    .wave.active span { animation: waveAnim .8s ease-in-out infinite alternate; }
-    .wave span:nth-child(1), .wave span:nth-child(8) { animation-delay: 0s; }
-    .wave span:nth-child(2), .wave span:nth-child(7) { animation-delay: .1s; }
-    .wave span:nth-child(3), .wave span:nth-child(6) { animation-delay: .2s; }
-    .wave span:nth-child(4), .wave span:nth-child(5) { animation-delay: .3s; }
-    @keyframes waveAnim { from { height: 4px; } to { height: 17px; } }
+
+    .wave {
+      height: 18px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 3px;
+      margin-bottom: .65rem;
+    }
+
+    .wave span {
+      width: 2px;
+      height: 4px;
+      border-radius: 2px;
+      background: #8b5cf6;
+      transition: height .2s;
+    }
+
+    .wave.active span {
+      animation: waveAnim .8s ease-in-out infinite alternate;
+    }
+
+    .wave span:nth-child(1),
+    .wave span:nth-child(8) {
+      animation-delay: 0s;
+    }
+
+    .wave span:nth-child(2),
+    .wave span:nth-child(7) {
+      animation-delay: .1s;
+    }
+
+    .wave span:nth-child(3),
+    .wave span:nth-child(6) {
+      animation-delay: .2s;
+    }
+
+    .wave span:nth-child(4),
+    .wave span:nth-child(5) {
+      animation-delay: .3s;
+    }
+
+    @keyframes waveAnim {
+      from {
+        height: 4px;
+      }
+
+      to {
+        height: 17px;
+      }
+    }
 
     /* Command chips */
     .commands-title {
-      font-family: "JetBrains Mono", monospace; font-size: .55rem;
-      letter-spacing: .1em; text-transform: uppercase;
-      color: #71717a; text-align: center; margin-bottom: .45rem;
+      font-family: "JetBrains Mono", monospace;
+      font-size: .55rem;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      color: #71717a;
+      text-align: center;
+      margin-bottom: .45rem;
     }
-    .commands { display: flex; flex-wrap: wrap; justify-content: center; gap: 5px; }
+
+    .commands {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 5px;
+    }
+
     .command-chip {
       padding: 6px 8px;
       border-radius: 8px;
-      border: 1px solid rgba(255,255,255,.08);
-      background: rgba(255,255,255,.04);
+      border: 1px solid rgba(255, 255, 255, .08);
+      background: rgba(255, 255, 255, .04);
       color: #a1a1aa;
       font-family: "JetBrains Mono", monospace;
       font-size: .55rem;
       cursor: pointer;
       transition: all .2s;
     }
-    .command-chip:hover { color: #fff; background: rgba(124,58,237,.18); border-color: rgba(167,139,250,.35); }
+
+    .command-chip:hover {
+      color: #fff;
+      background: rgba(124, 58, 237, .18);
+      border-color: rgba(167, 139, 250, .35);
+    }
 
     @media (max-width: 600px) {
-      .container { width: 90%; max-width: 360px; padding: 1.1rem 1rem; border-radius: 21px; }
-      .title { font-size: 1.45rem; }
-      .visualizer-container { width: 105px; height: 105px; }
-      .mic-btn { width: 66px; height: 66px; }
-      .mic-icon { width: 24px; height: 24px; }
+      .container {
+        width: 90%;
+        max-width: 360px;
+        padding: 1.1rem 1rem;
+        border-radius: 21px;
+      }
+
+      .title {
+        font-size: 1.45rem;
+      }
+
+      .visualizer-container {
+        width: 105px;
+        height: 105px;
+      }
+
+      .mic-btn {
+        width: 66px;
+        height: 66px;
+      }
+
+      .mic-icon {
+        width: 24px;
+        height: 24px;
+      }
     }
   </style>
 </head>
+
 <body>
 
   <video id="cameraBackground" autoplay playsinline muted></video>
+
   <div class="camera-overlay"></div>
   <div class="camera-glow"></div>
 
   <main class="container" id="novaCard">
 
     <header class="header">
-      <div class="status-indicator"><span class="status-dot"></span>NEURAL CORE ONLINE</div>
+
+      <div class="status-indicator">
+        <span class="status-dot"></span>
+        NEURAL CORE ONLINE
+      </div>
+
       <h1 class="title">Nova AI</h1>
-      <p class="subtitle">NEXT-GEN VOICE AGENT</p>
+
+      <p class="subtitle">
+        NEXT-GEN VOICE AGENT
+      </p>
+
     </header>
 
     <div class="visualizer-container">
+
       <div class="ring ring-1"></div>
       <div class="ring ring-2"></div>
-      <button id="micBtn" class="mic-btn" aria-label="Start voice command">
-        <svg class="mic-icon" viewBox="0 0 24 24">
+
+      <button
+        id="micBtn"
+        class="mic-btn"
+        aria-label="Start voice command">
+
+        <svg
+          class="mic-icon"
+          viewBox="0 0 24 24">
+
           <path d="M12 14a3 3 0 0 0 3-3V6a3 3 0 0 0-6 0v5a3 3 0 0 0 3 3z"/>
+
           <path d="M19 11a7 7 0 0 1-14 0"/>
+
           <line x1="12" y1="18" x2="12" y2="22"/>
+
           <line x1="8" y1="22" x2="16" y2="22"/>
+
         </svg>
+
       </button>
+
     </div>
 
-    <div class="status-box"><span id="status">CLICK THE MIC TO START</span></div>
-    <div id="transcript" class="transcript">Your voice command will appear here...</div>
+    <div class="status-box">
+      <span id="status">
+        CLICK THE MIC TO START
+      </span>
+    </div>
+
+    <div id="transcript" class="transcript">
+      Your voice command will appear here...
+    </div>
+
     <div id="wave" class="wave">
-      <span></span><span></span><span></span><span></span>
-      <span></span><span></span><span></span><span></span>
+      <span></span>
+      <span></span>
+      <span></span>
+      <span></span>
+      <span></span>
+      <span></span>
+      <span></span>
+      <span></span>
     </div>
 
-    <div class="commands-title">TRY SAYING</div>
+    <div class="commands-title">
+      TRY SAYING
+    </div>
+
     <div class="commands">
-      <button class="command-chip" data-command="Open YouTube and play Karuppu song">Open YouTube & play Karuppu</button>
-      <button class="command-chip" data-command="Email john at gmail.com type hello">Email John</button>
-      <button class="command-chip" data-command="Open Google">Open Google</button>
+
+      <button
+        class="command-chip"
+        data-command="Open YouTube and play Karuppu song">
+        Open YouTube & play Karuppu
+      </button>
+
+      <button
+        class="command-chip"
+        data-command="Email john at gmail.com type hello">
+        Email John
+      </button>
+
+      <button
+        class="command-chip"
+        data-command="Open Google">
+        Open Google
+      </button>
+
     </div>
 
   </main>
 
+
   <script>
+
     const micBtn = document.getElementById("micBtn");
     const status = document.getElementById("status");
     const transcript = document.getElementById("transcript");
@@ -235,158 +502,708 @@
     const cam = document.getElementById("cameraBackground");
     const card = document.getElementById("novaCard");
 
-    // --- Speech recognition ---
-    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-    let recog, listening = false;
+
+    /* =========================================================
+       GMAIL TAB MANAGEMENT
+       ========================================================= */
+
+    /*
+       This variable stores the Gmail browser window.
+
+       Instead of opening:
+           "_blank"
+
+       we use a fixed window name:
+
+           "NovaGmailWindow"
+
+       Browser behavior:
+       - First Gmail request  -> opens Gmail
+       - Second Gmail request -> reuses same tab
+       - Third Gmail request  -> reuses same tab
+    */
+
+    let gmailWindow = null;
+
+
+    function openGmail(url) {
+
+      /*
+         If the Gmail window already exists and is still open,
+         simply update its URL.
+      */
+
+      if (gmailWindow && !gmailWindow.closed) {
+
+        gmailWindow.location.href = url;
+
+        try {
+          gmailWindow.focus();
+        } catch (e) {
+          console.log("Unable to focus Gmail window.");
+        }
+
+        return;
+      }
+
+
+      /*
+         Create the Gmail window using a FIXED window name.
+
+         This is the important part.
+
+         Do NOT use "_blank" here.
+      */
+
+      gmailWindow = window.open(
+        url,
+        "NovaGmailWindow"
+      );
+
+
+      /*
+         If the browser returned a valid window,
+         bring it to the front.
+      */
+
+      if (gmailWindow) {
+
+        try {
+          gmailWindow.focus();
+        } catch (e) {
+          console.log("Unable to focus Gmail window.");
+        }
+
+      } else {
+
+        /*
+           Popup blocked by browser.
+        */
+
+        status.textContent =
+          "PLEASE ALLOW POPUPS FOR NOVA AI";
+
+      }
+
+    }
+
+
+    /* =========================================================
+       GENERAL URL OPENER
+       ========================================================= */
+
+    function openAgentResult(url) {
+
+      if (!url) {
+        return;
+      }
+
+
+      /*
+         Check whether the backend returned a Gmail URL.
+
+         Your Flask backend generates URLs containing:
+
+             mail.google.com
+      */
+
+      const isGmail =
+        url.includes("mail.google.com");
+
+
+      if (isGmail) {
+
+        /*
+           Gmail gets its dedicated reusable tab.
+        */
+
+        openGmail(url);
+
+      } else {
+
+        /*
+           Other services such as YouTube continue
+           opening normally in a separate tab.
+        */
+
+        const otherWindow =
+          window.open(url, "_blank");
+
+        if (otherWindow) {
+          otherWindow.focus();
+        }
+
+      }
+
+    }
+
+
+    /* =========================================================
+       SPEECH RECOGNITION
+       ========================================================= */
+
+    const SR =
+      window.SpeechRecognition ||
+      window.webkitSpeechRecognition;
+
+    let recog;
+    let listening = false;
+
 
     if (SR) {
+
       recog = new SR();
+
       recog.continuous = false;
       recog.interimResults = false;
       recog.lang = "en-US";
 
+
       recog.onstart = () => {
+
         listening = true;
+
         micBtn.classList.add("listening");
         wave.classList.add("active");
-        status.textContent = "LISTENING...";
-        transcript.textContent = "Speak your command...";
+
+        status.textContent =
+          "LISTENING...";
+
+        transcript.textContent =
+          "Speak your command...";
+
       };
+
 
       recog.onresult = (e) => {
-        const cmd = e.results[0][0].transcript;
+
+        const cmd =
+          e.results[0][0].transcript;
+
         transcript.textContent = cmd;
-        status.textContent = "PROCESSING COMMAND...";
+
+        status.textContent =
+          "PROCESSING COMMAND...";
+
         sendCommand(cmd);
+
       };
+
 
       recog.onend = () => {
+
         listening = false;
+
         micBtn.classList.remove("listening");
         wave.classList.remove("active");
-        if (status.textContent === "LISTENING...") status.textContent = "CLICK THE MIC TO START";
+
+
+        if (
+          status.textContent ===
+          "LISTENING..."
+        ) {
+
+          status.textContent =
+            "CLICK THE MIC TO START";
+
+        }
+
       };
+
 
       recog.onerror = (e) => {
+
         listening = false;
+
         micBtn.classList.remove("listening");
         wave.classList.remove("active");
+
+
         status.textContent =
-          e.error === "not-allowed" ? "MICROPHONE PERMISSION DENIED" :
-          e.error === "no-speech" ? "NO SPEECH DETECTED" : "VOICE ERROR";
+          e.error === "not-allowed"
+            ? "MICROPHONE PERMISSION DENIED"
+            : e.error === "no-speech"
+              ? "NO SPEECH DETECTED"
+              : "VOICE ERROR";
+
       };
+
     } else {
-      status.textContent = "VOICE RECOGNITION NOT SUPPORTED";
+
+      status.textContent =
+        "VOICE RECOGNITION NOT SUPPORTED";
+
     }
+
+
+    /* =========================================================
+       MIC BUTTON
+       ========================================================= */
 
     micBtn.addEventListener("click", () => {
-      if (!recog) return alert("Your browser does not support Speech Recognition.");
-      if (listening) return recog.stop();
-      try { recog.start(); } catch (e) { console.error(e); }
+
+      if (!recog) {
+
+        alert(
+          "Your browser does not support Speech Recognition."
+        );
+
+        return;
+      }
+
+
+      if (listening) {
+
+        recog.stop();
+
+        return;
+      }
+
+
+      try {
+
+        recog.start();
+
+      } catch (e) {
+
+        console.error(e);
+
+      }
+
     });
 
-    // --- Send command to backend ---
-    // pendingTab is opened synchronously on the user's click (see chip handler below)
-    // so the eventual window.open/redirect isn't blocked as a popup.
-    async function sendCommand(cmdText, pendingTab) {
-      try {
-        status.textContent = "CONNECTING TO NOVA CORE...";
-        const res = await fetch("/agent", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ command: cmdText })
-        });
-        if (!res.ok) throw new Error(`Server error: ${res.status}`);
 
-        const data = await res.json();
-        if (data.success) {
-          status.textContent = data.message || "COMMAND EXECUTED";
-          if (data.url) {
-            pendingTab ? (pendingTab.location.href = data.url) : window.open(data.url, "_blank");
+    /* =========================================================
+       SEND COMMAND TO BACKEND
+       ========================================================= */
+
+    async function sendCommand(cmdText) {
+
+      try {
+
+        status.textContent =
+          "CONNECTING TO NOVA CORE...";
+
+
+        const res = await fetch(
+          "/agent",
+          {
+            method: "POST",
+
+            headers: {
+              "Content-Type":
+                "application/json"
+            },
+
+            body: JSON.stringify({
+              command: cmdText
+            })
           }
-        } else {
-          status.textContent = data.message || "COMMAND FAILED";
-          pendingTab?.close();
+        );
+
+
+        if (!res.ok) {
+
+          throw new Error(
+            `Server error: ${res.status}`
+          );
+
         }
+
+
+        const data =
+          await res.json();
+
+
+        if (data.success) {
+
+          status.textContent =
+            data.message ||
+            "COMMAND EXECUTED";
+
+
+          /*
+             IMPORTANT:
+
+             We no longer do:
+
+                 window.open(data.url, "_blank")
+
+             Instead everything goes through:
+
+                 openAgentResult()
+
+             Gmail -> one reusable tab
+             YouTube/others -> normal new tab
+          */
+
+          if (data.url) {
+
+            openAgentResult(
+              data.url
+            );
+
+          }
+
+        } else {
+
+          status.textContent =
+            data.message ||
+            "COMMAND FAILED";
+
+        }
+
       } catch (err) {
+
         console.error(err);
-        status.textContent = "AGENT CONNECTION FAILED";
-        pendingTab?.close();
+
+        status.textContent =
+          "AGENT CONNECTION FAILED";
+
       }
+
     }
 
-    document.querySelectorAll(".command-chip").forEach((chip) => {
-      chip.addEventListener("click", function () {
-        const cmd = this.dataset.command;
-        transcript.textContent = cmd;
-        const tab = window.open("", "_blank"); // reserved on click, filled in once the response arrives
-        sendCommand(cmd, tab);
-      });
-    });
 
-    // --- Rear camera background ---
+    /* =========================================================
+       COMMAND CHIPS
+       ========================================================= */
+
+    document
+      .querySelectorAll(".command-chip")
+      .forEach((chip) => {
+
+        chip.addEventListener(
+          "click",
+          function () {
+
+            const cmd =
+              this.dataset.command;
+
+
+            transcript.textContent =
+              cmd;
+
+
+            /*
+               Do NOT create:
+
+                   window.open("", "_blank")
+
+               here.
+
+               sendCommand() will decide whether the
+               result is Gmail or another service.
+            */
+
+            sendCommand(cmd);
+
+          }
+        );
+
+      });
+
+
+    /* =========================================================
+       REAR CAMERA BACKGROUND
+       ========================================================= */
+
     (async function startCamera() {
+
       try {
-        if (!navigator.mediaDevices?.getUserMedia) return;
-        const stream = await navigator.mediaDevices.getUserMedia({
-          video: { facingMode: { ideal: "environment" }, width: { ideal: 1920 }, height: { ideal: 1080 } },
-          audio: false
-        });
-        cam.srcObject = stream;
+
+        if (
+          !navigator.mediaDevices?.getUserMedia
+        ) {
+          return;
+        }
+
+
+        const stream =
+          await navigator.mediaDevices
+            .getUserMedia({
+
+              video: {
+                facingMode: {
+                  ideal: "environment"
+                },
+
+                width: {
+                  ideal: 1920
+                },
+
+                height: {
+                  ideal: 1080
+                }
+              },
+
+              audio: false
+
+            });
+
+
+        cam.srcObject =
+          stream;
+
       } catch (e) {
+
         console.error(e);
-        cam.style.display = "none";
+
+        cam.style.display =
+          "none";
+
       }
+
     })();
 
-    // --- Drag to reposition the card ---
-    let dragging = false, sx = 0, sy = 0, sl = 0, st = 0;
+
+    /* =========================================================
+       DRAG TO REPOSITION CARD
+       ========================================================= */
+
+    let dragging = false;
+
+    let sx = 0;
+    let sy = 0;
+
+    let sl = 0;
+    let st = 0;
+
 
     function prep() {
-      const r = card.getBoundingClientRect();
-      card.style.position = "fixed";
-      card.style.left = `${r.left}px`;
-      card.style.top = `${r.top}px`;
-      card.style.margin = "0";
+
+      const r =
+        card.getBoundingClientRect();
+
+
+      card.style.position =
+        "fixed";
+
+      card.style.left =
+        `${r.left}px`;
+
+      card.style.top =
+        `${r.top}px`;
+
+      card.style.margin =
+        "0";
+
+
       return r;
+
     }
+
 
     function move(l, t) {
-      const r = card.getBoundingClientRect();
-      l = Math.max(0, Math.min(l, window.innerWidth - r.width));
-      t = Math.max(0, Math.min(t, window.innerHeight - r.height));
-      card.style.left = `${l}px`;
-      card.style.top = `${t}px`;
+
+      const r =
+        card.getBoundingClientRect();
+
+
+      l = Math.max(
+        0,
+        Math.min(
+          l,
+          window.innerWidth - r.width
+        )
+      );
+
+
+      t = Math.max(
+        0,
+        Math.min(
+          t,
+          window.innerHeight - r.height
+        )
+      );
+
+
+      card.style.left =
+        `${l}px`;
+
+      card.style.top =
+        `${t}px`;
+
     }
 
-    card.addEventListener("mousedown", (e) => {
-      if (e.target.closest("button")) return;
-      const r = prep();
-      dragging = true;
-      card.classList.add("dragging");
-      sx = e.clientX; sy = e.clientY; sl = r.left; st = r.top;
-      e.preventDefault();
-    });
-    document.addEventListener("mousemove", (e) => { if (dragging) move(sl + e.clientX - sx, st + e.clientY - sy); });
-    document.addEventListener("mouseup", () => { dragging = false; card.classList.remove("dragging"); });
 
-    card.addEventListener("touchstart", (e) => {
-      if (e.target.closest("button")) return;
-      const t = e.touches[0], r = prep();
-      dragging = true;
-      card.classList.add("dragging");
-      sx = t.clientX; sy = t.clientY; sl = r.left; st = r.top;
-      e.preventDefault();
-    }, { passive: false });
-    document.addEventListener("touchmove", (e) => {
-      if (!dragging) return;
-      const t = e.touches[0];
-      move(sl + t.clientX - sx, st + t.clientY - sy);
-      e.preventDefault();
-    }, { passive: false });
-    document.addEventListener("touchend", () => { dragging = false; card.classList.remove("dragging"); });
+    /* =========================================================
+       MOUSE DRAG
+       ========================================================= */
 
-    window.addEventListener("beforeunload", () => cam.srcObject?.getTracks().forEach((tr) => tr.stop()));
+    card.addEventListener(
+      "mousedown",
+      (e) => {
+
+        if (
+          e.target.closest("button")
+        ) {
+          return;
+        }
+
+
+        const r =
+          prep();
+
+
+        dragging = true;
+
+        card.classList.add(
+          "dragging"
+        );
+
+
+        sx = e.clientX;
+        sy = e.clientY;
+
+        sl = r.left;
+        st = r.top;
+
+
+        e.preventDefault();
+
+      }
+    );
+
+
+    document.addEventListener(
+      "mousemove",
+      (e) => {
+
+        if (!dragging) {
+          return;
+        }
+
+
+        move(
+          sl + e.clientX - sx,
+          st + e.clientY - sy
+        );
+
+      }
+    );
+
+
+    document.addEventListener(
+      "mouseup",
+      () => {
+
+        dragging = false;
+
+        card.classList.remove(
+          "dragging"
+        );
+
+      }
+    );
+
+
+    /* =========================================================
+       TOUCH DRAG
+       ========================================================= */
+
+    card.addEventListener(
+      "touchstart",
+      (e) => {
+
+        if (
+          e.target.closest("button")
+        ) {
+          return;
+        }
+
+
+        const t =
+          e.touches[0];
+
+        const r =
+          prep();
+
+
+        dragging = true;
+
+        card.classList.add(
+          "dragging"
+        );
+
+
+        sx = t.clientX;
+        sy = t.clientY;
+
+        sl = r.left;
+        st = r.top;
+
+
+        e.preventDefault();
+
+      },
+      {
+        passive: false
+      }
+    );
+
+
+    document.addEventListener(
+      "touchmove",
+      (e) => {
+
+        if (!dragging) {
+          return;
+        }
+
+
+        const t =
+          e.touches[0];
+
+
+        move(
+          sl + t.clientX - sx,
+          st + t.clientY - sy
+        );
+
+
+        e.preventDefault();
+
+      },
+      {
+        passive: false
+      }
+    );
+
+
+    document.addEventListener(
+      "touchend",
+      () => {
+
+        dragging = false;
+
+        card.classList.remove(
+          "dragging"
+        );
+
+      }
+    );
+
+
+    /* =========================================================
+       STOP CAMERA WHEN PAGE CLOSES
+       ========================================================= */
+
+    window.addEventListener(
+      "beforeunload",
+      () => {
+
+        cam.srcObject
+          ?.getTracks()
+          .forEach(
+            (tr) => tr.stop()
+          );
+
+      }
+    );
+
   </script>
+
 </body>
+
 </html>
